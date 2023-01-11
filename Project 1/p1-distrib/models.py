@@ -64,7 +64,7 @@ class FeatureExtractor(object):
         """
         raise Exception("Don't call me, call my subclasses")
 
-
+# [PART 1]
 class UnigramFeatureExtractor(FeatureExtractor):
     """
     Extracts unigram bag-of-words features from a sentence. It's up to you to decide how you want to handle counts
@@ -73,8 +73,17 @@ class UnigramFeatureExtractor(FeatureExtractor):
 
     def __init__(self, indexer: Indexer):
         raise Exception("Must be implemented")
+    
+    # from FeatureExtractor superclass
+    def get_indexer(self):
+        return super().get_indexer()
+    
+    # from FeatureExtractor superclass
+    def extract_features(self, sentence: List[str], add_to_indexer: bool = False) -> Counter:
+        return super().extract_features(sentence, add_to_indexer)
+    
 
-
+# [PART 1 exploration]
 class BigramFeatureExtractor(FeatureExtractor):
     """
     Bigram feature extractor analogous to the unigram one.
@@ -82,8 +91,17 @@ class BigramFeatureExtractor(FeatureExtractor):
 
     def __init__(self, indexer: Indexer):
         raise Exception("Must be implemented")
+    
+    # from FeatureExtractor superclass
+    def get_indexer(self):
+        return super().get_indexer()
+    
+    # from FeatureExtractor superclass
+    def extract_features(self, sentence: List[str], add_to_indexer: bool = False) -> Counter:
+        return super().extract_features(sentence, add_to_indexer)
 
 
+# [PART 1 exploration]
 class BetterFeatureExtractor(FeatureExtractor):
     """
     Better feature extractor...try whatever you can think of!
@@ -91,8 +109,17 @@ class BetterFeatureExtractor(FeatureExtractor):
 
     def __init__(self, indexer: Indexer):
         raise Exception("Must be implemented")
+    
+    # from FeatureExtractor superclass
+    def get_indexer(self):
+        return super().get_indexer()
+    
+    # from FeatureExtractor superclass
+    def extract_features(self, sentence: List[str], add_to_indexer: bool = False) -> Counter:
+        return super().extract_features(sentence, add_to_indexer)
+    
 
-
+# [PART 1]
 class LogisticRegressionClassifier(SentimentClassifier):
     """
     Implement this class -- you should at least have init() and implement the predict method from the SentimentClassifier
@@ -101,8 +128,12 @@ class LogisticRegressionClassifier(SentimentClassifier):
     """
     def __init__(self):
         raise Exception("Must be implemented")
+    
+    # predict method from SentimentClassifier superclass
+    def predict(self, ex_words: List[str]) -> int:
+        return 1
 
-
+# [PART 1]
 def train_logistic_regression(train_exs: List[SentimentExample], feat_extractor: FeatureExtractor) -> LogisticRegressionClassifier:
     """
     Train a logistic regression model.
@@ -110,7 +141,13 @@ def train_logistic_regression(train_exs: List[SentimentExample], feat_extractor:
     :param feat_extractor: feature extractor to use
     :return: trained LogisticRegressionClassifier model
     """
-    raise Exception("Must be implemented")
+    # create classifier
+    classifier = LogisticRegressionClassifier
+    
+    # train
+    
+    # return trained classifier
+    return classifier
 
 
 def train_linear_model(args, train_exs: List[SentimentExample], dev_exs: List[SentimentExample]) -> SentimentClassifier:
