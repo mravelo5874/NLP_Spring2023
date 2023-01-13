@@ -36,7 +36,12 @@ class SentimentClassifier(object):
         :return:
         """
         return [self.predict(ex_words) for ex_words in all_ex_words]
-
+    
+    def update_positive(self, indexes: List[int]):
+        raise Exception("Don't call me, call my subclasses")
+    
+    def update_negative(self, indexes: List[int]):
+        raise Exception("Don't call me, call my subclasses")
 
 class TrivialSentimentClassifier(SentimentClassifier):
     def predict(self, ex_words: List[str]) -> int:
@@ -120,6 +125,8 @@ class UnigramFeatureExtractor(FeatureExtractor):
     
     # from FeatureExtractor superclass
     def extract_features(self, sentence: List[str], add_to_indexer: bool = False) -> Counter:
+        feature_counter = Counter()
+        
         # for each word in a sentence
         for word in sentence:
             # clean word
@@ -139,7 +146,11 @@ class UnigramFeatureExtractor(FeatureExtractor):
             
             # only add to counter iff index not -1
             if index != -1:
+                feature_counter[index] += 1
                 self.my_counter[index] += 1
+                
+        # return counter
+        return feature_counter
     
 
 # [PART 1 exploration]
@@ -188,10 +199,39 @@ class LogisticRegressionClassifier(SentimentClassifier):
     def __init__(self, feat_extractor: FeatureExtractor):
         self.featurizer = feat_extractor
         self.weights = None
+        
+    def sigmoid(self, value: float):
+        exp_val = np.exp(value)
+        return exp_val / (1 + exp_val)
+        
+    def update_positive(self, indexes: List[int]):
+        for index in indexes:
+            w = self.weights[index]
+            val = 1 - self.sigmoid(w)
+            self.weights[index] = w + val
+    
+    def update_negative(self, indexes: List[int]):
+        for index in indexes:
+            w = self.weights[index]
+            val = self.sigmoid(w)
+            self.weights[index] = w - val
     
     # predict method from SentimentClassifier superclass
     def predict(self, ex_words: List[str]) -> int:
-        return 1
+        # extract features
+        feature_counter = self.featurizer.extract_features(ex_words, False)
+        
+        # TODO prediction is being done incorrectly
+        # add weights
+        sum = 0
+        for index in list(feature_counter):
+            sum += self.weights[index]
+            
+        # determine sentiment based on sum
+        if sum >= 0:
+            return 1
+        else: 
+            return 0
     
 
 # [PART 1]
@@ -226,16 +266,15 @@ def train_logistic_regression(train_exs: List[SentimentExample], feat_extractor:
         words = example.words
         label = example.label
         
-        # use model featurizer to clean words
-        clean_words = []
-        for word in words:
-            clean_word = model.featurizer.clean_word(word)
-            # add to list if not None
-            if clean_word != None:
-                clean_words.append(clean_word)
-        words = clean_words
+        # extract features
+        feature_counter = model.featurizer.extract_features(words, False)
+        #print (count, '\tlabel: ', label, '\twords: ', words, '\tcounter: ', sorted(feature_counter.elements()))
         
-        print (count, '\tlabel: ', label, '\twords: ', words)
+        # logistic regression
+        if label == 0:
+            model.update_negative(list(feature_counter))
+        elif label == 1:
+            model.update_positive(list(feature_counter))
     
     # return trained classifier
     return model
