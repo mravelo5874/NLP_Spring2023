@@ -45,6 +45,11 @@ def evaluate(classifier, exs):
     :param exs: the list of SentimentExamples to evaluate on
     :return: None (but prints output)
     """
+    
+    # print ('classifier: ', classifier)
+    # print ('num examples: ', len(exs))
+    # print ('examples: ', len(exs))
+    
     return print_evaluation([ex.label for ex in exs], classifier.predict_all([ex.words for ex in exs]))
 
 

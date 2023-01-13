@@ -11,6 +11,9 @@ from utils import *
 from collections import Counter
 
 
+NLTK_STOP_WORDS = ["i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you", "your", "yours", "yourself", "yourselves", "he", "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves", "what", "which", "who", "whom", "this", "that", "these", "those", "am", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had", "having", "do", "does", "did", "doing", "a", "an", "the", "and", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about", "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on", "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", "all", "any", "both", "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "s", "t", "can", "will", "just", "don", "should", "now"]
+
+
 class SentimentClassifier(object):
     """
     Sentiment classifier base type
@@ -48,8 +51,14 @@ class FeatureExtractor(object):
     """
     Feature extraction base type. Takes a sentence and returns an indexed list of features.
     """
-
-    def get_indexer(self):
+    
+    def get_indexer(self) -> Indexer:
+        raise Exception("Don't call me, call my subclasses")
+    
+    def get_counter(self) -> Counter:
+        raise Exception("Don't call me, call my subclasses")
+    
+    def clean_word(self, word: str) -> str:
         raise Exception("Don't call me, call my subclasses")
 
     def extract_features(self, sentence: List[str], add_to_indexer: bool = False) -> Counter:
@@ -72,15 +81,65 @@ class UnigramFeatureExtractor(FeatureExtractor):
     """
 
     def __init__(self, indexer: Indexer):
-        raise Exception("Must be implemented")
+        self.my_indexer = indexer
+        self.my_counter = Counter()
     
     # from FeatureExtractor superclass
     def get_indexer(self):
-        return super().get_indexer()
+        return self.my_indexer
+    
+    # from FeatureExtractor superclass
+    def get_counter(self):
+        return self.my_counter
+    
+    # cleans word for featurization and training
+    def clean_word(self, word):
+        # convert to all lowercase characters
+        word = word.lower()
+        
+        # remove all non-alphabetical characters from string
+        clean_word = ''
+        for character in word:
+            if character in 'abcdefghijklmnopqrstuvwxyz':
+                clean_word += character
+        word = clean_word
+        
+        # skip if word contains no characters
+        if len(word) <= 0:
+            return None
+        
+        # skip if word is in stop words list
+        if word in NLTK_STOP_WORDS:
+            #print ('stop word: ', word)
+            return None
+        
+        # TODO stemming
+        # TODO lemmanting
+        
+        return word
     
     # from FeatureExtractor superclass
     def extract_features(self, sentence: List[str], add_to_indexer: bool = False) -> Counter:
-        return super().extract_features(sentence, add_to_indexer)
+        # for each word in a sentence
+        for word in sentence:
+            # clean word
+            word = self.clean_word(word)
+            
+            # continue if word is None
+            if word == None:
+                continue
+            
+            # get index of word
+            index = -1
+            if add_to_indexer:
+                index = self.my_indexer.add_and_get_index(word)
+            else:
+                index = self.my_indexer.index_of(word)
+            #print ('word: ', word, ' index: ', index) 
+            
+            # only add to counter iff index not -1
+            if index != -1:
+                self.my_counter[index] += 1
     
 
 # [PART 1 exploration]
@@ -126,12 +185,14 @@ class LogisticRegressionClassifier(SentimentClassifier):
     superclass. Hint: you'll probably need this class to wrap both the weight vector and featurizer -- feel free to
     modify the constructor to pass these in.
     """
-    def __init__(self):
-        raise Exception("Must be implemented")
+    def __init__(self, feat_extractor: FeatureExtractor):
+        self.featurizer = feat_extractor
+        self.weights = None
     
     # predict method from SentimentClassifier superclass
     def predict(self, ex_words: List[str]) -> int:
         return 1
+    
 
 # [PART 1]
 def train_logistic_regression(train_exs: List[SentimentExample], feat_extractor: FeatureExtractor) -> LogisticRegressionClassifier:
@@ -141,13 +202,43 @@ def train_logistic_regression(train_exs: List[SentimentExample], feat_extractor:
     :param feat_extractor: feature extractor to use
     :return: trained LogisticRegressionClassifier model
     """
-    # create classifier
-    classifier = LogisticRegressionClassifier
+    # create model
+    model = LogisticRegressionClassifier(feat_extractor)
     
+    # extract features
+    for example in train_exs:
+        model.featurizer.extract_features(sentence=example.words, add_to_indexer=True)
+    
+    # get X most common words
+    counter = model.featurizer.get_counter()
+    # indexer = model.featurizer.get_indexer()
+    # most_common = counter.most_common(100)
+    # for index, count in most_common:
+    #     word = indexer.get_object(index)
+    #     print ('word: ', word, ' = ', count)
+    
+    # init weights
+    print ('individual words: ', len(counter))
+    model.weights = np.zeros(len(counter))
+        
     # train
+    for count, example in enumerate(train_exs):
+        words = example.words
+        label = example.label
+        
+        # use model featurizer to clean words
+        clean_words = []
+        for word in words:
+            clean_word = model.featurizer.clean_word(word)
+            # add to list if not None
+            if clean_word != None:
+                clean_words.append(clean_word)
+        words = clean_words
+        
+        print (count, '\tlabel: ', label, '\twords: ', words)
     
     # return trained classifier
-    return classifier
+    return model
 
 
 def train_linear_model(args, train_exs: List[SentimentExample], dev_exs: List[SentimentExample]) -> SentimentClassifier:
