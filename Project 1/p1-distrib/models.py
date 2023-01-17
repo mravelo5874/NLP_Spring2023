@@ -196,25 +196,55 @@ class LogisticRegressionClassifier(SentimentClassifier):
     superclass. Hint: you'll probably need this class to wrap both the weight vector and featurizer -- feel free to
     modify the constructor to pass these in.
     """
-    def __init__(self, feat_extractor: FeatureExtractor):
+    def __init__(self, args, feat_extractor: FeatureExtractor):
+        self.args = args
         self.featurizer = feat_extractor
         self.weights = None
+
+    def fit(self, train_exs):
+        # get feature counter (featire vector)
+        counter = self.featurizer.get_counter()
+
+        # get X most common words
+        # indexer = model.featurizer.get_indexer()
+        # most_common = counter.most_common(100)
+        # for index, count in most_common:
+        #     word = indexer.get_object(index)
+        #     print ('word: ', word, ' = ', count)
+
+        # init weights
+        print ('individual words: ', len(counter))
+        self.weights = np.zeros(len(counter))
+            
+        # train
+        for count, example in enumerate(train_exs):
+            words = example.words
+            label = example.label
+            
+            # extract features
+            feature_counter = self.featurizer.extract_features(words, False)
+            #print (count, '\tlabel: ', label, '\twords: ', words, '\tcounter: ', sorted(feature_counter.elements()))
+            self.update_weights(label, list(feature_counter))
+    
         
-    def sigmoid(self, value: float):
+    def logistic(self, value: float):
         exp_val = np.exp(value)
         return exp_val / (1 + exp_val)
-        
-    def update_positive(self, indexes: List[int]):
+
+    def SGD(self):
+        raise NotImplementedError
+
+    def update_weights(self, y: int, indexes: List[int]):
+        # iterate through each individual index
         for index in indexes:
             w = self.weights[index]
-            val = 1 - self.sigmoid(w)
-            self.weights[index] = w + val
-    
-    def update_negative(self, indexes: List[int]):
-        for index in indexes:
-            w = self.weights[index]
-            val = self.sigmoid(w)
-            self.weights[index] = w - val
+            P = self.logistic(w)
+            # update weight based on y value
+            if y == 1:
+                self.weights[index] = w + (1 - P)
+            elif y == 0:
+                self.weights[index] = w - P
+            
     
     # predict method from SentimentClassifier superclass
     def predict(self, ex_words: List[str]) -> int:
@@ -226,16 +256,20 @@ class LogisticRegressionClassifier(SentimentClassifier):
         sum = 0
         for index in list(feature_counter):
             sum += self.weights[index]
+
+        # calculate probability
+        exp_sum = np.exp(sum)
+        prob = exp_sum / (1 + exp_sum)
             
-        # determine sentiment based on sum
-        if sum >= 0:
+        # determine sentiment based on calculation
+        if exp_sum >= 0.5:
             return 1
         else: 
             return 0
     
 
 # [PART 1]
-def train_logistic_regression(train_exs: List[SentimentExample], feat_extractor: FeatureExtractor) -> LogisticRegressionClassifier:
+def train_logistic_regression(args, train_exs: List[SentimentExample], feat_extractor: FeatureExtractor) -> LogisticRegressionClassifier:
     """
     Train a logistic regression model.
     :param train_exs: training set, List of SentimentExample objects
@@ -243,38 +277,14 @@ def train_logistic_regression(train_exs: List[SentimentExample], feat_extractor:
     :return: trained LogisticRegressionClassifier model
     """
     # create model
-    model = LogisticRegressionClassifier(feat_extractor)
+    model = LogisticRegressionClassifier(args, feat_extractor)
     
     # extract features
     for example in train_exs:
         model.featurizer.extract_features(sentence=example.words, add_to_indexer=True)
-    
-    # get X most common words
-    counter = model.featurizer.get_counter()
-    # indexer = model.featurizer.get_indexer()
-    # most_common = counter.most_common(100)
-    # for index, count in most_common:
-    #     word = indexer.get_object(index)
-    #     print ('word: ', word, ' = ', count)
-    
-    # init weights
-    print ('individual words: ', len(counter))
-    model.weights = np.zeros(len(counter))
-        
-    # train
-    for count, example in enumerate(train_exs):
-        words = example.words
-        label = example.label
-        
-        # extract features
-        feature_counter = model.featurizer.extract_features(words, False)
-        #print (count, '\tlabel: ', label, '\twords: ', words, '\tcounter: ', sorted(feature_counter.elements()))
-        
-        # logistic regression
-        if label == 0:
-            model.update_negative(list(feature_counter))
-        elif label == 1:
-            model.update_positive(list(feature_counter))
+
+    # fit model using training data
+    model.fit(train_exs)
     
     # return trained classifier
     return model
@@ -305,7 +315,7 @@ def train_linear_model(args, train_exs: List[SentimentExample], dev_exs: List[Se
         raise Exception("Pass in UNIGRAM, BIGRAM, or BETTER to run the appropriate system")
 
     # Train the model
-    model = train_logistic_regression(train_exs, feat_extractor)
+    model = train_logistic_regression(args, train_exs, feat_extractor)
     return model
 
 
