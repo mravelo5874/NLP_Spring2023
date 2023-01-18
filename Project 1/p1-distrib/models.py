@@ -200,69 +200,77 @@ class LogisticRegressionClassifier(SentimentClassifier):
         self.args = args
         self.featurizer = feat_extractor
         self.weights = None
+        self.loss_list = []
 
     def fit(self, train_exs):
         # get feature counter (featire vector)
         counter = self.featurizer.get_counter()
 
         # get X most common words
-        # indexer = model.featurizer.get_indexer()
-        # most_common = counter.most_common(100)
-        # for index, count in most_common:
-        #     word = indexer.get_object(index)
-        #     print ('word: ', word, ' = ', count)
+        top_x_words = 25
+        indexer = self.featurizer.get_indexer()
+        most_common = counter.most_common(top_x_words)
+        for index, count in most_common:
+            word = indexer.get_object(index)
+            print ('word: ', word, ' = ', count)
 
         # init weights
         print ('individual words: ', len(counter))
         self.weights = np.zeros(len(counter))
             
-        # train
-        for count, example in enumerate(train_exs):
-            words = example.words
-            label = example.label
-            
-            # extract features
-            feature_counter = self.featurizer.extract_features(words, False)
-            #print (count, '\tlabel: ', label, '\twords: ', words, '\tcounter: ', sorted(feature_counter.elements()))
-            self.update_weights(label, list(feature_counter))
+        # train over x epochs
+        for _ in range(self.args.num_epochs):
+            for count, example in enumerate(train_exs):
+                # get data
+                words = example.words
+                label = example.label
+                # extract features
+                feature_counter = self.featurizer.extract_features(words, False)
+                #print (count, '\tlabel: ', label, '\twords: ', words, '\tcounter: ', sorted(feature_counter.elements()))
+                self.update_weights(label, list(feature_counter))
     
-        
+    # sigmoid function
     def logistic(self, value: float):
         exp_val = np.exp(value)
         return exp_val / (1 + exp_val)
-
-    def SGD(self):
-        raise NotImplementedError
 
     def update_weights(self, y: int, indexes: List[int]):
         # iterate through each individual index
         for index in indexes:
             w = self.weights[index]
-            P = self.logistic(w)
+            pred = self.logistic(w)
+            # calculate loss and gradient
+            loss = self.calculate_loss(y, pred)
+            self.loss_list.append(loss)
+            grad = self.calculate_gradient(y, pred)
             # update weight based on y value
-            if y == 1:
-                self.weights[index] = w + (1 - P)
-            elif y == 0:
-                self.weights[index] = w - P
-            
+            self.weights[index] = w - (self.args.lr * grad)
+    
+    # binary cross entropy loss function
+    def calculate_loss(self, y, pred):
+        return -np.mean(y*(np.log(pred))-(1-y)*np.log(1-pred))
+     
+    def calculate_gradient(self, y, pred):
+        difference = pred - y
+        return difference
     
     # predict method from SentimentClassifier superclass
     def predict(self, ex_words: List[str]) -> int:
         # extract features
         feature_counter = self.featurizer.extract_features(ex_words, False)
         
-        # TODO prediction is being done incorrectly
         # add weights
         sum = 0
         for index in list(feature_counter):
             sum += self.weights[index]
 
         # calculate probability
-        exp_sum = np.exp(sum)
-        prob = exp_sum / (1 + exp_sum)
+        prob = self.logistic(sum)
+        
+        #print ('predict: ', ex_words, '\tprob: ', prob)
             
         # determine sentiment based on calculation
-        if exp_sum >= 0.5:
+        if prob >= 0.5:
             return 1
         else: 
             return 0
