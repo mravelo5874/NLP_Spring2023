@@ -103,6 +103,9 @@ class WordEmbeddings:
 
     def get_embedding_length(self):
         return len(self.vectors[0])
+    
+    def get_indexer(self):
+        return self.word_indexer
 
     def get_embedding(self, word):
         """
