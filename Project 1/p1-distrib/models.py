@@ -100,21 +100,21 @@ class UnigramFeatureExtractor(FeatureExtractor):
         word = word.lower()
         
         # skip if word is in stop words list
-        if word in NLTK_STOP_WORDS:
-            #print ('stop word: ', word)
-            return None
+        # if word in NLTK_STOP_WORDS:
+        #     #print ('stop word: ', word)
+        #     return None
         
         # remove all non-alphabetical characters from string
-        clean_word = ''
-        for character in word:
-            if character in 'abcdefghijklmnopqrstuvwxyz':
-                clean_word += character
-        word = clean_word
+        # clean_word = ''
+        # for character in word:
+        #     if character in 'abcdefghijklmnopqrstuvwxyz':
+        #         clean_word += character
+        # word = clean_word
         
         # skip if word is in custom stop words list
-        if word in CUSTOM_STOP_WORDS:
-            #print ('stop word: ', word)
-            return None
+        # if word in CUSTOM_STOP_WORDS:
+        #     #print ('stop word: ', word)
+        #     return None
         
         # remove any suffix found in the word
         # for suffix in COMMON_SUFFIX_LIST:
@@ -205,7 +205,7 @@ class LogisticRegressionClassifier(SentimentClassifier):
     """
     def __init__(self, args, feat_extractor: FeatureExtractor):
         self.args = args
-        self.args.num_epochs = 10 # override num epochs value
+        self.args.num_epochs = 5 # override num epochs value
         self.args.lr = 0.1 # override lerning rate value
         self.featurizer = feat_extractor
         self.weights = None
@@ -216,7 +216,7 @@ class LogisticRegressionClassifier(SentimentClassifier):
         counter = self.featurizer.get_counter()
 
         # get X most common words
-        top_x_words = 1000
+        top_x_words = 10
         indexer = self.featurizer.get_indexer()
         most_common = counter.most_common(top_x_words)
         print ('[Top ', top_x_words, ' Words]')
@@ -237,39 +237,44 @@ class LogisticRegressionClassifier(SentimentClassifier):
         print ('[starting epochs]')
         print ('overridden epochs: ', self.args.num_epochs)
         print ('overridden learning rate: ', self.args.lr)
-        for _ in range(self.args.num_epochs):
+        for epoch in range(self.args.num_epochs):
+            # calculate alpha for gradient decent
+            alpha = self.args.lr
+            #alpha = 1 / (np.power(10, epoch))
+            print ('epoch: ', epoch + 1, ' alpha: ', alpha)
             # randomly shuffle training data
             random.shuffle(train_exs)
             # iterate through each example and update weights
-            for count, example in enumerate(train_exs):
+            for example in tqdm(train_exs):
                 # get data
                 words = example.words
                 label = example.label
                 # extract features
                 feature_counter = self.featurizer.extract_features(words, False)
                 #print (count, '\tlabel: ', label, '\twords: ', words, '\tcounter: ', sorted(feature_counter.elements()))
-                self.update_weights(label, list(feature_counter))
+                self.update_weights(label, list(feature_counter), alpha)
+            # get accuracy of model each epoch
     
     # sigmoid function
     def logistic(self, value: float):
         exp_val = np.exp(value)
         return exp_val / (1 + exp_val)
 
-    def update_weights(self, y: int, indexes: List[int]):
+    def update_weights(self, y: int, indexes: List[int], alpha: float):
         # iterate through each individual index
         for index in indexes:
             w = self.weights[index]
             pred = self.logistic(w)
             # calculate loss and gradient
-            loss = self.calculate_loss(y, pred)
+            loss = self.calculate_log_loss(y, pred)
             self.loss_list.append(loss)
-            grad = self.calculate_gradient(y, pred)
-            # update weight based on y value
-            self.weights[index] = w - (self.args.lr * grad)
+            # update weight based on y value using SGD
+            self.weights[index] = w - (alpha * self.calculate_gradient(y, pred))
+
     
-    # binary cross entropy loss function
-    def calculate_loss(self, y, pred):
-        return -np.mean(y*(np.log(pred))-(1-y)*np.log(1-pred))
+    # binary cross entropy log loss function
+    def calculate_log_loss(self, y, pred):
+        return -np.mean(y*(np.log(pred))+(1-y)*np.log(1-pred))
      
     def calculate_gradient(self, y, pred):
         difference = pred - y
