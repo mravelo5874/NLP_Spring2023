@@ -675,12 +675,12 @@ class NeuralSentimentClassifier(SentimentClassifier):
     Implement your NeuralSentimentClassifier here. This should wrap an instance of the network with learned weights
     along with everything needed to run it on new data (word embeddings, etc.)
     """
-    def __init__(self, args, model: DAN, word_embeddings: WordEmbeddings, dev_exs: List[SentimentExample]):
+    def __init__(self, args, iter_per_record, model: DAN, word_embeddings: WordEmbeddings, dev_exs: List[SentimentExample]):
         self.args = args
         self.model = model
         self.word_embeddings = word_embeddings
         self.dev_exs = dev_exs
-        self.iter_per_record = 100 # record stats (loss, accuracy, f1) each X amount of iterations
+        self.iter_per_record = iter_per_record # record stats (loss, accuracy, f1) each X amount of iterations
         self.loss_list = []
         self.acc_list = []
         self.f1_list = []
@@ -746,13 +746,13 @@ class NeuralSentimentClassifier(SentimentClassifier):
         for epoch in range(self.args.num_epochs):
             print ('[epoch ', epoch+1, ']')
             for x, y in tqdm(dataloader):
-                x = x.T
                 # prepare x and y for training
-                x = torch.IntTensor(x)
+                x = torch.IntTensor(x.T)
                 y_onehot = np.zeros(shape=[y.shape[0], 2])
                 for i in range(y.shape[0]):
                     y_onehot[i][y[i]] = 1
                 y_onehot = torch.FloatTensor(y_onehot)
+        
                 # Zero out the gradients
                 self.model.zero_grad()
                 log_probs = self.model.forward(x)
@@ -761,7 +761,7 @@ class NeuralSentimentClassifier(SentimentClassifier):
                 # Can also use built-in NLLLoss as a shortcut here but we're being explicit here
                 loss = criterion(log_probs, y_onehot)
                 #loss = torch.neg(log_probs).dot(y_onehot)
-                loss_value = 1 #loss.item()
+                loss_value = loss.item()
                 # Computes the gradient and takes the optimizer step
                 loss.backward()
                 optimizer.step()
@@ -779,21 +779,21 @@ class NeuralSentimentClassifier(SentimentClassifier):
             
         # print graphs at end of training
         plt.plot(self.iter_list, self.acc_list)
-        plt.title('accuracy over training iterations')
+        plt.title('accuracy over time')
         plt.ylabel('accuracy')
-        plt.ylabel('training iterations')
+        plt.xlabel('training iterations')
         plt.show()
         
-        plt.plot(self.iter_list, self.loss_list)
-        plt.title('loss over training iterations')
-        plt.ylabel('loss')
-        plt.ylabel('training iterations')
-        plt.show()
+        # plt.plot(self.iter_list, self.loss_list)
+        # plt.title('loss over training iterations')
+        # plt.ylabel('loss')
+        # plt.xlabel('training iterations')
+        # plt.show()
         
         plt.plot(self.iter_list, self.f1_list)
-        plt.title('f1-score over training iterations')
+        plt.title('f1-score over time')
         plt.ylabel('f1-score')
-        plt.ylabel('training iterations')
+        plt.xlabel('training iterations')
         plt.show()
             
     
@@ -834,69 +834,56 @@ def train_deep_averaging_network(args, train_exs: List[SentimentExample], dev_ex
 
 class NNN(nn.Module):
     
-    def __init__(self, num_output, lstm_layers, lstm_hidden, word_embeddings: WordEmbeddings):
+    def __init__(self, num_output, word_embeddings: WordEmbeddings):
         super(NNN, self).__init__()
-
-        self.lstm_layers = lstm_layers
-        self.lstm_hidden = lstm_hidden
         
         # create NNN layers
         self.embedding = word_embeddings.get_initialized_embedding_layer(True)
-        self.conv1 = nn.Conv1d(in_channels=1, out_channels=32, kernel_size=5, stride=1)
-        self.pool1 = nn.MaxPool1d(kernel_size=5, stride=1)
+        self.conv1 = nn.Conv1d(in_channels=1, out_channels=1, kernel_size=3, stride=1)
+        self.pool1 = nn.MaxPool1d(kernel_size=3, stride=1)
         self.tanh1 = nn.Tanh()
-        self.drop1 = nn.Dropout(p=0.1)
-        self.conv2 = nn.Conv1d(in_channels=32, out_channels=1, kernel_size=5, stride=1)
-        self.pool2 = nn.MaxPool1d(kernel_size=5, stride=1)
-        self.tanh2 = nn.Tanh()
-        self.drop2 = nn.Dropout(p=0.2)
-        self.lstm = nn.LSTM(input_size=284, hidden_size=self.lstm_hidden, num_layers=self.lstm_layers, batch_first=True)
-        self.linear = nn.Linear(in_features=self.lstm_hidden, out_features=num_output)
+        self.linear = nn.Linear(in_features=296, out_features=num_output)
         self.log_softmax = nn.LogSoftmax(dim=1)
         
         # Initialize weights according to a formula due to Xavier Glorot.
         nn.init.xavier_uniform_(self.conv1.weight)
-        nn.init.xavier_uniform_(self.conv2.weight)
         nn.init.xavier_uniform_(self.linear.weight)
         
     def forward(self, x):
+        # DAN
         x = self.embedding(x)
         x = torch.mean(input=x, dim=0)
+        
+        # reshape input for convolution layer
         if len(x.shape) == 2:
             x = x[:, None, :] # used when batching (multiple)
         elif len(x.shape) == 1:
             x = x[None, None, :] # used when predicting (single)
         
-        # convolution layers
-        x = self.drop1(self.pool1(self.tanh1(self.conv1(x))))
-        x = self.drop2(self.pool2(self.tanh2(self.conv2(x))))
-
-        # lstm layer
-        c_0 = Variable(torch.zeros(self.lstm_layers, x.shape[0], self.lstm_hidden)) #internal state
-        h_0 = Variable(torch.zeros(self.lstm_layers, x.shape[0], self.lstm_hidden)) # hidden state
-        lstm_out, (h_1, c_1) = self.lstm(x, (h_0, c_0))
+        # convolution layer
+        x = self.pool1(self.tanh1(self.conv1(x)))
 
         # final linear layer
-        #x = torch.squeeze(lstm_out, dim=1);
-        x = torch.squeeze(h_1, dim=0)    
+        x = torch.squeeze(x, dim=1)
         x = self.linear(x)
         out = self.log_softmax(x)
         return out
     
     
 def train_new_neural_network(args, train_exs: List[SentimentExample], dev_exs: List[SentimentExample], word_embeddings: WordEmbeddings) -> NeuralSentimentClassifier:
-     # override batch size
-    args.num_epochs = 5 # override num epochs value
-    args.lr = 0.01 # override lerning rate value
-    args.batch_size = 16
+    args.num_epochs = 10 # override num epochs value
+    args.lr = 0.001 # override lerning rate value
+    args.batch_size = 16 # override batch size
+    
+    # other training values
+    outputs = 2
+    iterations_per_record = 100
 
     # create NNN
-    lstm_layers = 1
-    lstm_hidden = 128
-    model = NNN(2, lstm_layers, lstm_hidden, word_embeddings)
+    model = NNN(outputs, word_embeddings)
     
     # create classifier
-    classifier = NeuralSentimentClassifier(args, model, word_embeddings, dev_exs)
+    classifier = NeuralSentimentClassifier(args, iterations_per_record, model, word_embeddings, dev_exs)
 
     # train 
     classifier.fit(train_exs)
