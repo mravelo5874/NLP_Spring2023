@@ -110,6 +110,8 @@ if __name__ == '__main__':
     start_time = time.time()
     if args.model == "DAN":
         model = train_deep_averaging_network(args, train_exs, dev_exs, word_embeddings)
+    elif args.model == "NNN":
+        model = train_new_neural_network(args, train_exs, dev_exs, word_embeddings)
     elif args.model == "LR":
         model = train_linear_model(args, train_exs, dev_exs)
     else:

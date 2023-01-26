@@ -654,7 +654,7 @@ class DAN(nn.Module):
         return out
 
 
-class DAN_DATASET(Dataset):
+class NN_DATASET(Dataset):
     
     def __init__(self, features, labels):
         self.features = features
@@ -728,8 +728,8 @@ class NeuralSentimentClassifier(SentimentClassifier):
         train_matrix = np.array(train_feature_list)
         label_matrix = np.array(train_label_list)
         # create dataloader
-        dataset = DAN_DATASET(train_matrix, label_matrix)
-        dataloader = DataLoader(dataset, batch_size=self.args.batch_size, shuffle=True)
+        dataset = NN_DATASET(train_matrix, label_matrix)
+        dataloader = DataLoader(dataset, batch_size=self.args.batch_size, shuffle=True, drop_last=True)
         # optimizer
         optimizer = optim.Adam(self.model.parameters(), lr=self.args.lr)
         # loss
@@ -755,6 +755,8 @@ class NeuralSentimentClassifier(SentimentClassifier):
                 # Zero out the gradients
                 self.model.zero_grad()
                 log_probs = self.model.forward(x)
+                # print ('log probs: ', log_probs.shape)
+                # print ('y_onehot: ', y_onehot.shape)
                 # Can also use built-in NLLLoss as a shortcut here but we're being explicit here
                 loss = criterion(log_probs, y_onehot)
                 #loss = torch.neg(log_probs).dot(y_onehot)
@@ -812,12 +814,79 @@ def train_deep_averaging_network(args, train_exs: List[SentimentExample], dev_ex
     :return: A trained NeuralSentimentClassifier model
     """
     # override batch size
-    args.num_epochs = 25 # override num epochs value
+    args.num_epochs = 10 # override num epochs value
     args.lr = 0.00001 # override lerning rate value
     args.batch_size = 64
 
     # create DAN
     model = DAN(300, 500, 2, word_embeddings)
+    
+    # create classifier
+    classifier = NeuralSentimentClassifier(args, model, word_embeddings, dev_exs)
+
+    # train 
+    classifier.fit(train_exs)
+    
+    return classifier
+
+
+
+class NNN(nn.Module):
+    
+    def __init__(self, num_output, word_embeddings: WordEmbeddings):
+        super(NNN, self).__init__()
+        
+        # create NNN layers
+        self.embedding = word_embeddings.get_initialized_embedding_layer(True)
+        
+
+        self.conv1 = nn.Conv1d(in_channels=1, out_channels=8, kernel_size=3, stride=1)
+        self.pool1 = nn.MaxPool1d(kernel_size=3, stride=1)
+        self.tanh1 = nn.Tanh()
+        self.conv2 = nn.Conv1d(in_channels=8, out_channels=16, kernel_size=3, stride=1)
+        self.pool2 = nn.MaxPool1d(kernel_size=3, stride=1)
+        self.tanh2 = nn.Tanh()
+        self.conv3 = nn.Conv1d(in_channels=16, out_channels=32, kernel_size=3, stride=1)
+        self.pool3 = nn.MaxPool1d(kernel_size=3, stride=1)
+        self.tanh3 = nn.Tanh()
+        self.conv4 = nn.Conv1d(in_channels=32, out_channels=1, kernel_size=3, stride=1)
+        self.pool4 = nn.MaxPool1d(kernel_size=3, stride=1)
+        self.tanh4 = nn.Tanh()
+        self.linear = nn.Linear(in_features=284, out_features=num_output)
+        self.log_softmax = nn.LogSoftmax(dim=1)
+        
+        # Initialize weights according to a formula due to Xavier Glorot.
+        nn.init.xavier_uniform_(self.conv1.weight)
+        nn.init.xavier_uniform_(self.conv2.weight)
+        nn.init.xavier_uniform_(self.conv3.weight)
+        nn.init.xavier_uniform_(self.conv4.weight)
+        nn.init.xavier_uniform_(self.linear.weight)
+        
+    def forward(self, x):   
+        x = self.embedding(x)
+        x = torch.mean(input=x, dim=0)
+        if len(x.shape) == 2:
+            x = x[:, None, :] # used when batching (multiple)
+        elif len(x.shape) == 1:
+            x = x[None, None, :] # used when predicting (single)
+        x = self.tanh1(self.pool1(self.conv1(x)))
+        x = self.tanh2(self.pool2(self.conv2(x)))
+        x = self.tanh3(self.pool3(self.conv3(x)))
+        x = self.tanh3(self.pool3(self.conv4(x)))
+        x = torch.squeeze(x, dim=1)
+        x = self.linear(x)
+        out = self.log_softmax(x)
+        return out
+    
+    
+def train_new_neural_network(args, train_exs: List[SentimentExample], dev_exs: List[SentimentExample], word_embeddings: WordEmbeddings) -> NeuralSentimentClassifier:
+     # override batch size
+    args.num_epochs = 10 # override num epochs value
+    args.lr = 0.01 # override lerning rate value
+    args.batch_size = 16
+
+    # create NNN
+    model = NNN(2, word_embeddings)
     
     # create classifier
     classifier = NeuralSentimentClassifier(args, model, word_embeddings, dev_exs)
