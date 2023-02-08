@@ -851,14 +851,19 @@ class NNN(nn.Module):
         
     def forward(self, x):
         # DAN
+        print ('x1: ', x.shape)
         x = self.embedding(x)
+        print ('x2: ', x.shape)
         x = torch.mean(input=x, dim=0)
-        
+        print ('x3: ', x.shape)
+         
         # reshape input for convolution layer
         if len(x.shape) == 2:
             x = x[:, None, :] # used when batching (multiple)
         elif len(x.shape) == 1:
             x = x[None, None, :] # used when predicting (single)
+            
+        print ('x4: ', x.shape)
         
         # convolution layer
         x = self.pool1(self.tanh1(self.conv1(x)))
