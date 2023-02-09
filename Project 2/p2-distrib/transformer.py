@@ -49,6 +49,8 @@ class Transformer(nn.Module):
         self.linear = nn.Linear(d_model, num_classes)
         self.softmax = nn.LogSoftmax(dim=2)
         
+        nn.init.xavier_uniform_(self.linear.weight)
+        
     def get_atten_maps(self):
         maps_list = []
         for layer in self.trans_layers:
@@ -216,6 +218,8 @@ class my_multi_head_atten(nn.Module):
         self.linear = nn.Linear(num_heads * d_k, d_model)
         self.atten = None
         
+        nn.init.xavier_uniform_(self.linear.weight)
+        
     def get_atten_maps(self):
         maps_list = []
         for h in self.heads:
@@ -234,6 +238,10 @@ class my_attention_head(nn.Module):
         self.k = nn.Linear(d_model, d_k)
         self.v = nn.Linear(d_model, d_k)
         self.atten_map = None
+        
+        nn.init.xavier_uniform_(self.q.weight)
+        nn.init.xavier_uniform_(self.k.weight)
+        nn.init.xavier_uniform_(self.v.weight)
     
     def get_atten_map(self):
         return self.atten_map
@@ -337,44 +345,66 @@ def plot_maps(attn_maps, chars, plot_first=True):
 # This is a skeleton for train_classifier: you can implement this however you want
 def train_classifier(args, train, dev):
     # set up dataloader for batching
-    batch_size = 64
+    batch_size = 1
     train_dataloader = set_up_dataloader(train, batch_size)
     # create model
-    model = Transformer(num_pos=20, d_model=512, num_heads=1, d_ff=2048, num_classes=3, num_layers=1, dropout=0.1)
+    model = Transformer(num_pos=20, d_model=512, num_heads=2, d_ff=2048, num_classes=3, num_layers=1, dropout=0.1)
     model.zero_grad()
     model.train()
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
     
     # train model
-    num_epochs = 3
+    num_epochs = 5
+    iter_list = []
+    loss_list = []
+    # keep track of total iterations
+    iteration = 0
     print ('[starting training]')
     for epoch in range(0, num_epochs):
         loss_this_epoch = 0.0
         random.seed(epoch)
         # You can use batching if you'd like
-        loss_func = nn.BCEWithLogitsLoss()
+        #loss_func = nn.BCEWithLogitsLoss()
+        loss_func = nn.NLLLoss()
         for x, y, c in tqdm(train_dataloader):
+            # inc. iteration
+            iteration += 1
             # restructure y to be [batch_size, 20, 3]
-            y = one_hot_y(y, batch_size)
+            #y = func.one_hot(y)
             
             # forward pass
+            model.zero_grad()
             p, maps = model.forward(x)
             #print ('p.shape: ', p.shape)
             #plot_maps(maps, c)
+            #p = torch.argmax(p, dim=2)
 
             # fix pred and y tensors for NLLLoss
-            p = torch.reshape(p, (batch_size * 20, 3))
-            y = torch.reshape(y, (batch_size * 20, 3))
+            p = torch.reshape(p, [batch_size * 20, 3])
+            y = torch.reshape(y, [batch_size * 20])
             #print('y.shape: ', y.shape)
             #print('p.shape: ', p.shape)
+            
+            #print('y: ', y)
+            #print('p: ', p)
+            #loss = func.cross_entropy(p.view(-1, p.size(-1)))
             loss = loss_func(p, y)
+            loss_list.append(loss.item())
+            iter_list.append(iteration)
             
             # backward pass
-            model.zero_grad()
             loss.backward()
             optimizer.step()
             loss_this_epoch += loss.item()
+        print ('total loss over epoch %i: %f' % (epoch + 1, loss_this_epoch))
     model.eval()
+    
+    plt.plot(iter_list, loss_list)
+    plt.title('loss over training iterations')
+    plt.ylabel('loss')
+    plt.xlabel('training iterations')
+    plt.show()
+        
     return model
 
 
