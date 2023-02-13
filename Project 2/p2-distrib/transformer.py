@@ -34,7 +34,7 @@ class LetterCountingExample(object):
 # a single layer of the Transformer; this Module will take the raw words as input and do all of the steps necessary
 # to return distributions over the labels (0, 1, or 2).
 class Transformer(nn.Module):
-    def __init__(self, num_pos, d_model, num_heads, d_ff, num_classes, num_layers, dropout):
+    def __init__(self, vocab_size, num_pos, d_model, num_heads, d_ff, num_classes, num_layers, dropout):
         """
         :param vocab_size: vocabulary size of the embedding layer
         :param num_positions: max sequence length that will be fed to the model; should be 20
@@ -44,6 +44,7 @@ class Transformer(nn.Module):
         :param num_layers: number of TransformerLayers to use; can be whatever you want
         """        
         super().__init__()
+        self.embed = nn.Embedding(vocab_size, d_model)
         self.pos_encode = PositionalEncoding(d_model, num_pos, True)
         self.trans_layers = nn.ModuleList([my_transformer_layer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)])
         self.linear = nn.Linear(d_model, num_classes)
@@ -57,28 +58,28 @@ class Transformer(nn.Module):
             maps_list.append(layer.get_atten_maps())
         return torch.cat(maps_list)
         
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x, print_shapes = False) -> torch.Tensor:
         """
         :param indices: list of input indices
         :return: A tuple of the softmax log probabilities (should be a 20x3 matrix) and a list of the attention
         maps you use in your layers (can be variable length, but each should be a 20x20 matrix)
         """
-        #print ('x.shape init: ', x.shape)
-        # (0) add extra dimension for embedding
-        x = torch.unsqueeze(x, dim=len(x.shape))
-        #print ('x.shape unsqueeze: ', x.shape)
+        
+        if (print_shapes): print ('x.shape init: ', x.shape)
+        x = self.embed(x)
+        if (print_shapes): print ('x.shape embed: ', x.shape)
         # (1) adding positional encodings to the input (see the PositionalEncoding class; but we recommend leaving these out for now)
         x = self.pos_encode(x) # input -> [batch size, seq len, embedding dim]
-        #print ('x.shape pos encode: ', x.shape)
+        if (print_shapes): print ('x.shape pos encode: ', x.shape)
         # (2) using one or more of your TransformerLayers;
         for layer in self.trans_layers:
             x = layer(x)
-        #print ('x.shape trans: ', x.shape)
+        if (print_shapes): print ('x.shape trans: ', x.shape)
         # (3) using Linear and softmax layers to make the prediction
         x = self.linear(x)
-        #print ('x.shape linear: ', x.shape)
+        if (print_shapes): print ('x.shape linear: ', x.shape)
         x = self.softmax(x)
-        #print ('x.shape softmax: ', x.shape)    
+        if (print_shapes): print ('x.shape softmax: ', x.shape)
         x = torch.squeeze(x)
         return x, self.get_atten_maps()
 
@@ -112,63 +113,6 @@ class my_transformer_layer(nn.Module):
         x = self.atten(x, x, x)
         x = self.ff(x)
         return x
-
-# class my_transformer_decoder(nn.Module):
-#     def __init__(self, num_layers: int, num_pos: int, d_model: int, num_heads: int, d_ff: int, dropout: float):
-#         super().__init__()
-#         self.pos_encode = PositionalEncoding(d_model, num_pos, batched=True)
-#         self.layers = nn.ModuleList(
-#             my_transformer_decoder_layer(d_model, num_heads, d_ff, dropout)
-#             for _ in range(num_layers)
-#         )
-#         self.linear = nn.Linear(d_model, d_model)
-        
-#     def forward(self, tgt: torch.Tensor, mem: torch.Tensor) -> torch.Tensor:
-#         tgt = self.pos_encode(tgt)
-#         for layer in self.layers:
-#             tgt = layer(tgt, mem)
-#         tgt = torch.softmax(self.linear(tgt), dim=-1)
-#         return tgt
-
-# class my_transformer_decoder_layer(nn.Module):
-#     def __init__(self, d_model: int, num_heads: int, d_ff: int, dropout: float):
-#         super().__init__()
-#         self.atten_1 = my_residual(
-#             my_multi_head_atten(num_heads, d_model),
-#             d_model,
-#             dropout,
-#         )
-#         self.atten_2 = my_residual(
-#             my_multi_head_atten(num_heads, d_model),
-#             d_model,
-#             dropout,
-#         )
-#         self.ff = my_residual(
-#             my_ff(d_model, d_ff),
-#             d_model,
-#             dropout,
-#         )
-        
-#     def forward(self, tgt: torch.Tensor, mem: torch.Tensor) -> torch.Tensor:
-#         tgt = self.atten_1(tgt, tgt, tgt)
-#         tgt = self.atten_2(tgt, mem, mem)
-#         tgt = self.ff(tgt)
-#         return tgt
-
-# class my_transformer_encoder(nn.Module):
-#     def __init__(self, num_layers: int, num_pos: int, d_model: int, num_heads: int, d_ff: int, dropout: float):
-#         super().__init__()
-#         self.pos_encode = PositionalEncoding(d_model, num_pos, batched=True)
-#         self.layers = nn.ModuleList(
-#             my_transformer_encoder_layer(d_model, num_heads, d_ff, dropout)
-#             for _ in range(num_layers)
-#         )
-        
-#     def forward(self, x: torch.Tensor) -> torch.Tensor:
-#         x = self.pos_encode(x)
-#         for layer in self.layers:
-#             x = layer(x)
-#         return x
         
 class my_transformer_encoder_layer(nn.Module):
     def __init__(self, d_model: int, num_heads: int, d_ff: int, dropout: float):
@@ -345,10 +289,10 @@ def plot_maps(attn_maps, chars, plot_first=True):
 # This is a skeleton for train_classifier: you can implement this however you want
 def train_classifier(args, train, dev):
     # set up dataloader for batching
-    batch_size = 1
+    batch_size = 16
     train_dataloader = set_up_dataloader(train, batch_size)
     # create model
-    model = Transformer(num_pos=20, d_model=512, num_heads=2, d_ff=2048, num_classes=3, num_layers=1, dropout=0.1)
+    model = Transformer(vocab_size=27, num_pos=20, d_model=512, num_heads=1, d_ff=2048, num_classes=3, num_layers=1, dropout=0.1)
     model.zero_grad()
     model.train()
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
@@ -359,14 +303,18 @@ def train_classifier(args, train, dev):
     loss_list = []
     # keep track of total iterations
     iteration = 0
+    
+    print ('epochs: ', num_epochs)
+    print ('batch_size: ', batch_size)
     print ('[starting training]')
     for epoch in range(0, num_epochs):
         loss_this_epoch = 0.0
         random.seed(epoch)
         # You can use batching if you'd like
-        #loss_func = nn.BCEWithLogitsLoss()
+        epoch_maps = []
+        epoch_chars = []
         loss_func = nn.NLLLoss()
-        for x, y, c in tqdm(train_dataloader):
+        for x, y, c in tqdm(train_dataloader): # tqdm removed for autograder
             # inc. iteration
             iteration += 1
             # restructure y to be [batch_size, 20, 3]
@@ -376,7 +324,8 @@ def train_classifier(args, train, dev):
             model.zero_grad()
             p, maps = model.forward(x)
             #print ('p.shape: ', p.shape)
-            #plot_maps(maps, c)
+            epoch_maps.append(maps)
+            epoch_chars.append(c)
             #p = torch.argmax(p, dim=2)
 
             # fix pred and y tensors for NLLLoss
@@ -397,6 +346,8 @@ def train_classifier(args, train, dev):
             optimizer.step()
             loss_this_epoch += loss.item()
         print ('total loss over epoch %i: %f' % (epoch + 1, loss_this_epoch))
+        N = len(epoch_maps)-1
+        plot_maps(epoch_maps[N], epoch_chars[N])
     model.eval()
     
     plt.plot(iter_list, loss_list)
