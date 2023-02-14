@@ -109,8 +109,8 @@ class my_transformer_layer(nn.Module):
     def get_atten_maps(self):
         return self.atten.sublayer.get_atten_maps()
         
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.atten(x, x, x)
+    def forward(self, x: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+        x = self.atten(x, x, x, mask)
         x = self.ff(x)
         return x
         
@@ -128,8 +128,8 @@ class my_transformer_encoder_layer(nn.Module):
             dropout,
         )
         
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.atten(x, x, x)
+    def forward(self, x: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+        x = self.atten(x, x, x, mask)
         x = self.ff(x)
         return x
 
@@ -163,15 +163,20 @@ class my_multi_head_atten(nn.Module):
         self.atten = None
         
         nn.init.xavier_uniform_(self.linear.weight)
-        
+    
+    # averages together maps from each head independent of batch size
     def get_atten_maps(self):
         maps_list = []
         for h in self.heads:
-            maps_list.append(h.get_atten_map())
-        return torch.cat(maps_list)
+            head_map = h.get_atten_map()
+            head_map = torch.unsqueeze(head_map, dim=0)
+            maps_list.append(head_map)
+        maps = torch.cat(maps_list)
+        maps = torch.mean(maps, dim=0)
+        return maps
     
-    def forward(self, _q: torch.Tensor, _k: torch.Tensor, _v: torch.Tensor) -> torch.Tensor:
-        return self.linear(torch.cat([h(_q, _k, _v) for h in self.heads], dim=-1))
+    def forward(self, _q: torch.Tensor, _k: torch.Tensor, _v: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+        return self.linear(torch.cat([h(_q, _k, _v, mask) for h in self.heads], dim=-1))
     
 # implements a single attention head
 class my_attention_head(nn.Module):
@@ -181,7 +186,7 @@ class my_attention_head(nn.Module):
         self.q = nn.Linear(d_model, d_k)
         self.k = nn.Linear(d_model, d_k)
         self.v = nn.Linear(d_model, d_k)
-        self.atten_map = None
+        self.atten_maps = None
         
         nn.init.xavier_uniform_(self.q.weight)
         nn.init.xavier_uniform_(self.k.weight)
@@ -190,14 +195,15 @@ class my_attention_head(nn.Module):
     def get_atten_map(self):
         return self.atten_map
         
-    def forward(self, _q: torch.Tensor, _k: torch.Tensor, _v: torch.Tensor) -> torch.Tensor:
-        res, atten_map = scaled_dot_product_attention(self.q(_q), self.k(_k), self.v(_v), self.d_k)
+    def forward(self, _q: torch.Tensor, _k: torch.Tensor, _v: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+        res, atten_map = scaled_dot_product_attention(self.q(_q), self.k(_k), self.v(_v), self.d_k, mask)
         self.atten_map = atten_map
         return res
     
 # used for forward() of single attention head
-def scaled_dot_product_attention(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, d_k: int):
+def scaled_dot_product_attention(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, d_k: int, mask: torch.Tensor):
     scores = q.bmm(k.transpose(1, 2)) / math.sqrt(d_k)
+    #scores *= mask
     atten_map = func.softmax(scores, dim=-1)
     output = atten_map.bmm(v)
     return output, atten_map
@@ -249,9 +255,7 @@ class MY_DATASET(Dataset):
         return len(self.labels)
         
     def __getitem__(self, idx):
-        feature = self.features[idx]
-        label = self.labels[idx]
-        return feature, label, self.chars[idx]
+        return self.features[idx], self.labels[idx], self.chars[idx]
         
 def set_up_dataloader(train: List[LetterCountingExample], batch_size: int) -> DataLoader:
     input_list = []
@@ -275,24 +279,27 @@ def one_hot_y(_y: torch.Tensor, batch_size: int) -> torch.Tensor:
     y_oh = torch.FloatTensor(y_oh)
     return y_oh
 
-def plot_maps(attn_maps, chars, plot_first=True):
+def plot_maps(attn_maps, chars, plots_to_show=1):
+    plots_shown = 0
     for j in range(0, len(attn_maps)):
         attn_map = attn_maps[j]
         fig, ax = plt.subplots()
-        im = ax.imshow(attn_map.detach().numpy(), cmap='hot', interpolation='nearest')
+        im = ax.imshow(attn_map, cmap='hot', interpolation='nearest')
         ax.set_xticks(np.arange(len(chars[j])), labels=chars[j])
         ax.set_yticks(np.arange(len(chars[j])), labels=chars[j])
         ax.xaxis.tick_top()
         plt.show()
-        if (plot_first): return
+        # stop showing plots
+        plots_shown +=1
+        if (plots_shown >= plots_to_show): return
 
 # This is a skeleton for train_classifier: you can implement this however you want
 def train_classifier(args, train, dev):
     # set up dataloader for batching
-    batch_size = 16
+    batch_size = 8
     train_dataloader = set_up_dataloader(train, batch_size)
     # create model
-    model = Transformer(vocab_size=27, num_pos=20, d_model=512, num_heads=1, d_ff=2048, num_classes=3, num_layers=1, dropout=0.1)
+    model = Transformer(vocab_size=27, num_pos=20, d_model=512, num_heads=2, d_ff=2048, num_classes=3, num_layers=4, dropout=0.1)
     model.zero_grad()
     model.train()
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
@@ -323,9 +330,20 @@ def train_classifier(args, train, dev):
             # forward pass
             model.zero_grad()
             p, maps = model.forward(x)
-            #print ('p.shape: ', p.shape)
+            
+            # convert string into char array
+            chars_list = []
+            for item in c:
+                chars = []
+                for j in item:
+                    chars.append(j)
+                chars_list.append(chars)
+            chars_list = np.array(chars_list)
+            #print ('c.shape: ', chars_list.shape)
+            #print ('maps.shape: ', maps.shape)
+            
             epoch_maps.append(maps)
-            epoch_chars.append(c)
+            epoch_chars.append(chars_list)
             #p = torch.argmax(p, dim=2)
 
             # fix pred and y tensors for NLLLoss
@@ -346,8 +364,13 @@ def train_classifier(args, train, dev):
             optimizer.step()
             loss_this_epoch += loss.item()
         print ('total loss over epoch %i: %f' % (epoch + 1, loss_this_epoch))
-        N = len(epoch_maps)-1
-        plot_maps(epoch_maps[N], epoch_chars[N])
+        # rearrange maps and chars for vizualization
+        np_epoch_maps = torch.cat(epoch_maps).detach().numpy()
+        np_epoch_chars = np.array(epoch_chars)
+        np_epoch_chars = np.reshape(np_epoch_chars, (np_epoch_chars.shape[0] * np_epoch_chars.shape[1], np_epoch_chars.shape[2]))
+        print ('np_epoch_maps.shape', np_epoch_maps.shape)
+        print ('np_epoch_chars.shape', np_epoch_chars.shape)
+        #plot_maps(np_epoch_maps, np_epoch_chars, 16)
     model.eval()
     
     plt.plot(iter_list, loss_list)

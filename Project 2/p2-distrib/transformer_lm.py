@@ -10,10 +10,12 @@ from torch import optim
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import random
-#from tqdm import tqdm
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 from typing import List
 from utils import *
+
+import transformer
 
 
 class LanguageModel(nn.Module):
@@ -37,11 +39,82 @@ class UniformLanguageModel(LanguageModel):
 
     def get_next_char_log_probs(self, context):
         return np.ones([self.voc_size]) * np.log(1.0/self.voc_size)
-
-
-class NeuralLanguageModel(LanguageModel):
-    def __init__(self, vocab_size: int, d_out: int, d_model: int, n_heads: int, d_hid: int, n_layers: int, dropout: float, indexer: Indexer):
+    
+    
+'''
+Custom NeuralLanguageModel that uses my custom transformer layer instead of pytorch's nn.TransformerEncoder module
+'''
+class MyNeuralLanguageModel(LanguageModel):
+    def __init__(self, model_name: str, vocab_size: int, d_out: int, d_model: int, n_heads: int, d_hid: int, n_layers: int, dropout: float, indexer: Indexer):
         super().__init__()
+        self.model_name = model_name
+        self.indexer = indexer
+        self.d_model = d_model
+        self.embed = nn.Embedding(vocab_size, d_model)
+        self.pos_encode = PositionalEncoding(d_model, dropout, 5000)
+        self.trans_encoder = nn.ModuleList([transformer.my_transformer_layer(d_model, n_heads, d_hid, dropout) for _ in range(n_layers)])
+        self.linear = nn.Linear(d_model, d_out)
+        self.logsoft = nn.LogSoftmax(dim=2)
+        
+        self.init_weights()
+
+    def init_weights(self):
+        init_range = 0.1
+        self.embed.weight.data.uniform_(-init_range, init_range)
+        self.linear.bias.data.zero_()
+        self.linear.weight.data.uniform_(-init_range, init_range)
+
+    def get_next_char_log_probs(self, context):
+        # make sure context is not empty
+        if (len(context) <= 0):
+            context = ' '
+        # set model to evaluation mode
+        self.eval()
+        # convert string to indicies and to tensor
+        indicies = index_data(context, self.indexer)
+        seq = torch.IntTensor(indicies)
+        # add extra dimension for 'batch size' of 1
+        seq = torch.unsqueeze(seq, dim=0)
+        # send through forward() to get predictions
+        mask = generate_square_mask(len(context))
+        pred = self.forward(seq, mask)
+        # remove batch dimension
+        pred = torch.squeeze(pred, dim=0)
+        # get last tensor row and convert to numpy array
+        last_index = pred.shape[0]-1
+        pred = pred[last_index].detach().numpy()
+        return pred
+
+    def forward(self, x: Tensor, mask: Tensor, print_shapes = False) -> Tensor:
+        """
+        x: Tensor, shape [batch_size, seq_len]
+        mask: Tensor, shape [seq_len, seq_len]
+        """
+        if print_shapes: print ('init x.shape: ', x.shape)
+        x = self.embed(x) * math.sqrt(self.d_model)
+        if print_shapes: print ('embed x.shape: ', x.shape)
+        x = self.pos_encode(x)
+        if print_shapes: print ('encode x.shape: ', x.shape)
+        # x = torch.permute(x, (1, 0, 2))
+        # if print_shapes: print ('permute x.shape: ', x.shape)
+        for layer in self.trans_encoder:
+            x = layer(x, mask)
+        if print_shapes: print ('trans x.shape: ', x.shape)
+        x = self.linear(x)
+        if print_shapes: print ('linear x.shape: ', x.shape)
+        out = self.logsoft(x)
+        if print_shapes: print ('logsoft x.shape: ', x.shape)
+        # out = torch.permute(x, (1, 0, 2))
+        # if print_shapes: print ('permute x.shape: ', out.shape)
+        return out
+
+'''
+NeuralLanguageModel using pytorch's nn.TransformerEncoder module
+'''
+class NeuralLanguageModel(LanguageModel):
+    def __init__(self, model_name: str, vocab_size: int, d_out: int, d_model: int, n_heads: int, d_hid: int, n_layers: int, dropout: float, indexer: Indexer):
+        super().__init__()
+        self.model_name = model_name
         self.indexer = indexer
         self.d_model = d_model
         self.embed = nn.Embedding(vocab_size, d_model)
@@ -219,7 +292,8 @@ def train_lm(args, train_text, dev_text, vocab_index):
     d_hid = 2048
     n_layers = 3
     dropout = 0.0
-    model = NeuralLanguageModel(vocab_size, d_out, d_model, n_heads, d_hid, n_layers, dropout, vocab_index)
+    #model = MyNeuralLanguageModel('custom transformer', vocab_size, d_out, d_model, n_heads, d_hid, n_layers, dropout, vocab_index)
+    model = NeuralLanguageModel('pytorch\'s transformer', vocab_size, d_out, d_model, n_heads, d_hid, n_layers, dropout, vocab_index)
     model.zero_grad()
     model.train()
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
@@ -242,7 +316,7 @@ def train_lm(args, train_text, dev_text, vocab_index):
         random.seed(epoch)
         # loss function
         loss_func = nn.NLLLoss()
-        for x, y in train_dataloader: # tqdm removed for autograder
+        for x, y in tqdm(train_dataloader):
             # inc. iteration
             iteration += 1
 
@@ -268,6 +342,7 @@ def train_lm(args, train_text, dev_text, vocab_index):
     
     print ("--- total train time: %.4s seconds ---" % (time.time() - start_time))
     print ("--- 10 mins = 600 seconds ---")
+    print ("model name: ", model.model_name)
     
     # plot loss over time
     plt.plot(iter_list, loss_list)
