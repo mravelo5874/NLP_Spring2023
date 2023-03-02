@@ -193,6 +193,7 @@ def main():
                     f.write('\n')
             else:
                 for i, example in enumerate(eval_dataset):
+                    # 0 = entailment, 1 = neutral, 2 = contradiction
                     example_with_prediction = dict(example)
                     example_with_prediction['predicted_scores'] = eval_predictions.predictions[i].tolist()
                     example_with_prediction['predicted_label'] = int(eval_predictions.predictions[i].argmax())
