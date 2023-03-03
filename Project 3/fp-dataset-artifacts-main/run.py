@@ -66,6 +66,8 @@ def main():
         eval_split = 'validation_matched' if dataset_id == ('glue', 'mnli') else 'validation'
         # Load the raw data
         dataset = datasets.load_dataset(*dataset_id)
+        
+    print ('dataset: ', dataset)
     
     # NLI models need to have the output label count specified (label 0 is "entailed", 1 is "neutral", and 2 is "contradiction")
     task_kwargs = {'num_labels': 3} if args.task == 'nli' else {}
@@ -118,6 +120,13 @@ def main():
             num_proc=NUM_PREPROCESSING_WORKERS,
             remove_columns=eval_dataset.column_names
         )
+        
+    print ('train_dataset: ', train_dataset)
+    print ('eval_dataset: ', eval_dataset)
+    print ('type(eval_dataset): ', type(eval_dataset))
+    
+    print ('train_dataset_featurized: ', train_dataset_featurized)
+    print ('eval_dataset_featurized: ', eval_dataset_featurized)
 
     # Select the training configuration
     trainer_class = Trainer
