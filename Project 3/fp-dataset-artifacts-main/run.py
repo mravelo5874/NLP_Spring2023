@@ -5,6 +5,8 @@ from helpers import prepare_dataset_nli, prepare_train_dataset_qa, \
     prepare_validation_dataset_qa, QuestionAnsweringTrainer, compute_accuracy
 import os
 import json
+from cartography import CartographerTrainer
+from callbacks import CartographerCallback
 
 NUM_PREPROCESSING_WORKERS = 2
 
@@ -143,6 +145,7 @@ def main():
         compute_metrics = lambda eval_preds: metric.compute(
             predictions=eval_preds.predictions, references=eval_preds.label_ids)
     elif args.task == 'nli':
+        trainer_class = CartographerTrainer
         compute_metrics = compute_accuracy
     
 
@@ -165,6 +168,7 @@ def main():
     )
     # Train and/or evaluate
     if training_args.do_train:
+        trainer.add_callback(CartographerCallback)
         trainer.train()
         trainer.save_model()
         # If you want to customize the way the loss is computed, you should subclass Trainer and override the "compute_loss"
