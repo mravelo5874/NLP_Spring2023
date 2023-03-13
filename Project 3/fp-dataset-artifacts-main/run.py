@@ -169,7 +169,7 @@ def main():
     # Train and/or evaluate
     if training_args.do_train:
         trainer.add_callback(CartographerCallback)
-        trainer.train()
+        trainer.train_me()
         trainer.save_model()
         # If you want to customize the way the loss is computed, you should subclass Trainer and override the "compute_loss"
         # method (see https://huggingface.co/transformers/_modules/transformers/trainer.html#Trainer.compute_loss).

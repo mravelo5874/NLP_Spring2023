@@ -16,23 +16,31 @@ class CartographerTrainer(Trainer):
         self.logits = []
         self.golds = []
 
+    def train_me(self):
+        self.train()
+        self.log_training_dynamics()
+
     def log_training_dynamics(self):
         """
         Save training dynamics (logits) from given epoch as records of a `.jsonl` file.
         """
 
-        print ('self.ids: ', self.ids)
-        print ('self.logits-len: ', self.logits)
-        print ('self.golds-len: ', self.golds)
+        # print ('self.ids: ', self.ids)
+        # print ('self.logits-len: ', self.logits)
+        # print ('self.golds-len: ', self.golds)
 
         print ('ids-len: ', len(self.ids))
         print ('logits-len: ', len(self.logits))
         print ('golds-len: ', len(self.golds))
 
+        examples = []
+        for i in range(len(self.ids)):
+            d = {"guid": self.ids[i], f"logits_epoch_{self.curr_epoch}": self.logits[i], "gold": self.golds[i]}
+            # print ('d: ', d)
+            examples.append(d)
 
-        td_df = pd.DataFrame({"guid": self.ids,
-                        f"logits_epoch_{self.curr_epoch}": self.logits,
-                        "gold": self.golds})
+        td_df = pd.DataFrame(examples)
+        # print ('td_df: ', td_df)
 
         logging_dir = os.path.join(self.output_dir, f"training_dynamics")
         # Create directory for logging training dynamics, if it doesn't already exist.
@@ -47,11 +55,6 @@ class CartographerTrainer(Trainer):
         How the loss is computed by Trainer. By default, all models return the loss in the first element.
         Subclass and override for custom behavior.
         """
-
-        train_ids = None
-        train_golds = None
-        train_logits = None
-        train_losses = None
 
         if self.label_smoother is not None and "labels" in inputs:
             labels = inputs.pop("labels")
@@ -80,7 +83,7 @@ class CartographerTrainer(Trainer):
         this_epoch = int(np.floor(self.state.epoch))
         print ('epoch:', this_epoch)
         batch_len = len(inputs['input_ids'])
-        print ('batch len: ', batch_len)
+        #print ('batch len: ', batch_len)
 
         ids = []
         for i in range(batch_len):
@@ -90,13 +93,12 @@ class CartographerTrainer(Trainer):
         logits = outputs['logits'].detach().cpu().numpy()
         golds = inputs['labels'].detach().cpu().numpy()
 
-        print ('ids: ', ids)
-        print ('logits: ', logits)
-        print ('logits.shape: ', logits.shape)
-        print ('labels: ', golds)
+        #print ('ids: ', ids)
+        #print ('logits: ', logits)
+        #print ('logits.shape: ', logits.shape)
+        #print ('labels: ', golds)
 
         # Keep track of training dynamics
-        
         
         if (this_epoch == self.curr_epoch):
             if len(self.ids) <= 0:
@@ -113,8 +115,8 @@ class CartographerTrainer(Trainer):
         else:
             self.log_training_dynamics()
             self.curr_epoch = this_epoch
-            self.ids = []
-            self.logits = []
-            self.golds = []
+            self.ids = np.array(ids)
+            self.logits = np.array(logits)
+            self.golds = np.array(golds)
 
         return (loss, outputs) if return_outputs else loss
