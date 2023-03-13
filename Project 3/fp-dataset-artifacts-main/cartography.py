@@ -1,4 +1,6 @@
+import os
 import numpy as np
+import pandas as pd
 from transformers import Trainer
 from transformers.modeling_utils import unwrap_model
 from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
@@ -8,6 +10,37 @@ class CartographerTrainer(Trainer):
         super().__init__(*args, **kwargs)
         self.eval_examples = eval_examples
         self.example_id = 0
+        self.output_dir = 'cartography_dir'
+        self.curr_epoch = 0
+        self.ids = []
+        self.logits = []
+        self.golds = []
+
+    def log_training_dynamics(self):
+        """
+        Save training dynamics (logits) from given epoch as records of a `.jsonl` file.
+        """
+
+        print ('self.ids: ', self.ids)
+        print ('self.logits-len: ', self.logits)
+        print ('self.golds-len: ', self.golds)
+
+        print ('ids-len: ', len(self.ids))
+        print ('logits-len: ', len(self.logits))
+        print ('golds-len: ', len(self.golds))
+
+
+        td_df = pd.DataFrame({"guid": self.ids,
+                        f"logits_epoch_{self.curr_epoch}": self.logits,
+                        "gold": self.golds})
+
+        logging_dir = os.path.join(self.output_dir, f"training_dynamics")
+        # Create directory for logging training dynamics, if it doesn't already exist.
+        if not os.path.exists(logging_dir):
+            os.makedirs(logging_dir)
+        epoch_file_name = os.path.join(logging_dir, f"dynamics_epoch_{self.curr_epoch}.jsonl")
+        td_df.to_json(epoch_file_name, lines=True, orient="records")
+
 
     def compute_loss(self, model, inputs, return_outputs=False):
         """
@@ -44,35 +77,44 @@ class CartographerTrainer(Trainer):
             # We don't use .loss here since the model may return tuples instead of ModelOutput.
             loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
 
-        # TODO get epoch and guid from inputs
-        print ('epoch:', np.floor(self.state.epoch))
-        print ('example_id:', self.example_id)
-        print ('inputs:', inputs)
-        print ('labels: ', inputs['labels'])
-        print ('input_ids: ', inputs['input_ids'])
-        print ('logits: ', outputs['logits'])
-        print ('loss: ', loss)
+        this_epoch = int(np.floor(self.state.epoch))
+        print ('epoch:', this_epoch)
+        batch_len = len(inputs['input_ids'])
+        print ('batch len: ', batch_len)
 
-        self.example_id += 1
+        ids = []
+        for i in range(batch_len):
+            ids.append(self.example_id)
+            self.example_id += 1
+        ids = np.array(ids)
+        logits = outputs['logits'].detach().cpu().numpy()
+        golds = inputs['labels'].detach().cpu().numpy()
 
-        """
-        if train_logits is None:  # Keep track of training dynamics.
-            train_ids = batch[4].detach().cpu().numpy()
-            train_logits = outputs[1].detach().cpu().numpy()
-            train_golds = inputs["labels"].detach().cpu().numpy()
-            train_losses = loss.detach().cpu().numpy()
+        print ('ids: ', ids)
+        print ('logits: ', logits)
+        print ('logits.shape: ', logits.shape)
+        print ('labels: ', golds)
+
+        # Keep track of training dynamics
+        
+        
+        if (this_epoch == self.curr_epoch):
+            if len(self.ids) <= 0:
+                self.ids = np.array(ids)
+                self.logits = np.array(logits)
+                self.golds = np.array(golds)
+            else:
+                # add ids
+                self.ids = np.append(self.ids, ids)
+                # add logits
+                self.logits = np.append(self.logits, logits, axis=0)
+                # add golds
+                self.golds = np.append(self.golds, golds)
         else:
-            train_ids = np.append(train_ids, batch[4].detach().cpu().numpy())
-            train_logits = np.append(train_logits, outputs[1].detach().cpu().numpy(), axis=0)
-            train_golds = np.append(train_golds, inputs["labels"].detach().cpu().numpy())
-            train_losses = np.append(train_losses, loss.detach().cpu().numpy())
-
-        # Keep track of training dynamics.
-        log_training_dynamics(output_dir=args.output_dir,
-                              epoch=epoch,
-                              train_ids=list(train_ids),
-                              train_logits=list(train_logits),
-                              train_golds=list(train_golds))
-        """
+            self.log_training_dynamics()
+            self.curr_epoch = this_epoch
+            self.ids = []
+            self.logits = []
+            self.golds = []
 
         return (loss, outputs) if return_outputs else loss
