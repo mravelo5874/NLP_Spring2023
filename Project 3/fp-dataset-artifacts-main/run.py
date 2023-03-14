@@ -6,7 +6,8 @@ from helpers import prepare_dataset_nli, prepare_train_dataset_qa, \
 import os
 import json
 from cartography import CartographerTrainer
-from callbacks import CartographerCallback
+
+# import transformers.models.electra.modeling_electra
 
 NUM_PREPROCESSING_WORKERS = 2
 
@@ -104,13 +105,21 @@ def main():
     eval_dataset_featurized = None
     if training_args.do_train:
         train_dataset = dataset['train']
+        
+        new_column = [0] * len(train_dataset)
+        for i in range(len(train_dataset)):
+            new_column[i] = i
+        train_dataset = train_dataset.add_column("guids", new_column)
+        
+        print ('train_dataset.column_names: ', train_dataset.column_names)
+          
         if args.max_train_samples:
             train_dataset = train_dataset.select(range(args.max_train_samples))
         train_dataset_featurized = train_dataset.map(
             prepare_train_dataset,
             batched=True,
             num_proc=NUM_PREPROCESSING_WORKERS,
-            remove_columns=train_dataset.column_names
+            remove_columns=['premise', 'hypothesis', 'label']
         )
     if training_args.do_eval:
         eval_dataset = dataset[eval_split]
@@ -125,7 +134,6 @@ def main():
         
     print ('train_dataset: ', train_dataset)
     print ('eval_dataset: ', eval_dataset)
-    print ('type(eval_dataset): ', type(eval_dataset))
     
     print ('train_dataset_featurized: ', train_dataset_featurized)
     print ('eval_dataset_featurized: ', eval_dataset_featurized)
@@ -157,6 +165,8 @@ def main():
         eval_predictions = eval_preds
         return compute_metrics(eval_preds)
 
+    training_args.remove_unused_columns = False
+    
     # Initialize the Trainer object with the specified arguments and the model and dataset we loaded above
     trainer = trainer_class(
         model=model,
@@ -168,7 +178,7 @@ def main():
     )
     # Train and/or evaluate
     if training_args.do_train:
-        trainer.add_callback(CartographerCallback)
+        # trainer.add_callback(CartographerCallback)
         trainer.train_me()
         trainer.save_model()
         # If you want to customize the way the loss is computed, you should subclass Trainer and override the "compute_loss"

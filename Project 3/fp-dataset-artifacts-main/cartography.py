@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from transformers import Trainer
+import inspect
 from transformers.modeling_utils import unwrap_model
 from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 
@@ -17,6 +18,15 @@ class CartographerTrainer(Trainer):
         self.golds = []
 
     def train_me(self):
+        
+        train_dataloader = self.get_train_dataloader()
+        print ('train_dataloader.dataset[0]: ', train_dataloader.dataset[0])
+        
+        
+        print ('self.model.__class__', self.model.__class__)
+        signature = inspect.signature(self.model.__class__.forward)
+        print ('signature: ', signature)
+        
         self.train()
         self.log_training_dynamics()
 
@@ -81,15 +91,15 @@ class CartographerTrainer(Trainer):
             loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
 
         this_epoch = int(np.floor(self.state.epoch))
-        print ('epoch:', this_epoch)
+        #print ('epoch:', this_epoch)
         batch_len = len(inputs['input_ids'])
         #print ('batch len: ', batch_len)
 
-        ids = []
-        for i in range(batch_len):
-            ids.append(self.example_id)
-            self.example_id += 1
-        ids = np.array(ids)
+        # TODO
+        # print ('inputs: ', inputs['idx'].detach().cpu().numpy())
+        # print ('inputs: ', inputs)
+        
+        guids = inputs['guids'].detach().cpu().numpy()
         logits = outputs['logits'].detach().cpu().numpy()
         golds = inputs['labels'].detach().cpu().numpy()
 
@@ -102,12 +112,12 @@ class CartographerTrainer(Trainer):
         
         if (this_epoch == self.curr_epoch):
             if len(self.ids) <= 0:
-                self.ids = np.array(ids)
+                self.ids = np.array(guids)
                 self.logits = np.array(logits)
                 self.golds = np.array(golds)
             else:
                 # add ids
-                self.ids = np.append(self.ids, ids)
+                self.ids = np.append(self.ids, guids)
                 # add logits
                 self.logits = np.append(self.logits, logits, axis=0)
                 # add golds
@@ -115,7 +125,7 @@ class CartographerTrainer(Trainer):
         else:
             self.log_training_dynamics()
             self.curr_epoch = this_epoch
-            self.ids = np.array(ids)
+            self.ids = np.array(guids)
             self.logits = np.array(logits)
             self.golds = np.array(golds)
 
