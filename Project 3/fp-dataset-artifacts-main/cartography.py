@@ -90,18 +90,18 @@ class CartographerTrainer(Trainer):
             # We don't use .loss here since the model may return tuples instead of ModelOutput.
             loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
 
-        this_epoch = int(np.floor(self.state.epoch))
+        #this_epoch = int(np.floor(self.state.epoch))
         #print ('epoch:', this_epoch)
-        batch_len = len(inputs['input_ids'])
+        #batch_len = len(inputs['input_ids'])
         #print ('batch len: ', batch_len)
 
         # TODO
         # print ('inputs: ', inputs['idx'].detach().cpu().numpy())
         # print ('inputs: ', inputs)
         
-        guids = inputs['guids'].detach().cpu().numpy()
-        logits = outputs['logits'].detach().cpu().numpy()
-        golds = inputs['labels'].detach().cpu().numpy()
+        # guids = inputs['guids'].detach().cpu().numpy()
+        # logits = outputs['logits'].detach().cpu().numpy()
+        # golds = inputs['labels'].detach().cpu().numpy()
 
         #print ('ids: ', ids)
         #print ('logits: ', logits)
@@ -110,23 +110,23 @@ class CartographerTrainer(Trainer):
 
         # Keep track of training dynamics
         
-        if (this_epoch == self.curr_epoch):
-            if len(self.ids) <= 0:
-                self.ids = np.array(guids)
-                self.logits = np.array(logits)
-                self.golds = np.array(golds)
-            else:
-                # add ids
-                self.ids = np.append(self.ids, guids)
-                # add logits
-                self.logits = np.append(self.logits, logits, axis=0)
-                # add golds
-                self.golds = np.append(self.golds, golds)
-        else:
-            self.log_training_dynamics()
-            self.curr_epoch = this_epoch
-            self.ids = np.array(guids)
-            self.logits = np.array(logits)
-            self.golds = np.array(golds)
+        # if (this_epoch == self.curr_epoch):
+        #     if len(self.ids) <= 0:
+        #         self.ids = np.array(guids)
+        #         self.logits = np.array(logits)
+        #         self.golds = np.array(golds)
+        #     else:
+        #         # add ids
+        #         self.ids = np.append(self.ids, guids)
+        #         # add logits
+        #         self.logits = np.append(self.logits, logits, axis=0)
+        #         # add golds
+        #         self.golds = np.append(self.golds, golds)
+        # else:
+        #     self.log_training_dynamics()
+        #     self.curr_epoch = this_epoch
+        #     self.ids = np.array(guids)
+        #     self.logits = np.array(logits)
+        #     self.golds = np.array(golds)
 
         return (loss, outputs) if return_outputs else loss

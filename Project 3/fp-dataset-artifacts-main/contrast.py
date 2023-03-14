@@ -8,7 +8,7 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description='contrast.py')
     parser.add_argument('--file', type=str, default='./LIT_SNLI/original+basic/test.tsv', help='file to use to create contrast file.')
-    parser.add_argument('--output', type=str, default='contrast_set.json', help='output file to write contrast set.')
+    parser.add_argument('--output', type=str, default='contrast_set_test.json', help='output file to write contrast set.')
     parser.add_argument('--output_dir', type=str, default='./contrast_dir/', help='output directory to write contrast set.')
     args = parser.parse_args()
     return args

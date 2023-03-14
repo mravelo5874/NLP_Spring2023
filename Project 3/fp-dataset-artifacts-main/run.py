@@ -106,12 +106,20 @@ def main():
     if training_args.do_train:
         train_dataset = dataset['train']
         
+        # create guids for data
         new_column = [0] * len(train_dataset)
         for i in range(len(train_dataset)):
             new_column[i] = i
         train_dataset = train_dataset.add_column("guids", new_column)
         
         print ('train_dataset.column_names: ', train_dataset.column_names)
+        
+        # get valid guids
+        with open('./ids.json', 'r') as json_file:
+            data = json.load(json_file)
+        # filter 
+        train_dataset = train_dataset.filter(lambda example: example['guids'] in data)
+        print ('train_dataset filtered: ', len(train_dataset))
           
         if args.max_train_samples:
             train_dataset = train_dataset.select(range(args.max_train_samples))
