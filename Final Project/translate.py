@@ -27,9 +27,14 @@ def main():
     #     This should either be a HuggingFace model ID (see https://huggingface.co/models)
     #     or a path to a saved model checkpoint (a folder containing config.json and pytorch_model.bin).""")
     
-    src = 'The sun rose over the mountains, casting a golden glow across the valley.'
+    # 'The sun rose over the mountains, casting a golden glow across the valley.'
+    # 'The city\'s heartbeat echoed through the night, a symphony of sirens, footsteps, and distant laughter, as the streets pulsed with life and energy, relentless and unforgiving.'
+    # 'The scent of roses wafted through the air, mingling with the salty tang of the sea, as the sun dipped below the horizon, casting the world into twilight.'
+    # 'The theoretical framework adopted in this research drew upon established theories in the field of social sciences, providing a solid conceptual foundation for the study and guiding the formulation of research questions and hypotheses.'
+    
+    src = 'The scent of roses wafted through the air, mingling with the salty tang of the sea, as the sun dipped below the horizon, casting the world into twilight.'
     print ('source: ', src)
-    print ('translating src...\n')
+    print ('translating source sentence...\n')
     
     m2m_model = M2M()
     m2m_model.encode(src, 'en')
