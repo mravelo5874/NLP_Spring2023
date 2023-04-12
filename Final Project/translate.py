@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 import transformers as trans
-from facebook import m2m100, mbart
-from google_research import t5
+from multi_lingual_models import m2m100, mbart, mt0
 from similarity import similar
 
 ''' example sentences: '''
@@ -35,7 +34,7 @@ def main():
     # example translations
     if in_args.task == 'example' and in_args.model == 'm2m': m2m_example_translate()
     elif in_args.task == 'example' and in_args.model == 'mbart': mbart_example_translate()
-    elif in_args.task == 'example' and in_args.model == 'mt5': mt5_example_translate()
+    elif in_args.task == 'example' and in_args.model == 'mt0': mt0_example_translate()
     
     # similarity matrix generation
     elif in_args.task == 'sim' and in_args.model == 'm2m': similarity('m2m')
@@ -45,29 +44,33 @@ def main():
     
 def similarity(model: str):
 
-    print ('m2m:')
-    sim_en_m2m = similar('m2m', ['red', 'green', 'blue', 'color', 'paint'], 'en')
+    print ('m2m/english:')
+    sim_en_m2m = similar('m2m', ['small', 'short', 'child', 'wife', 'mother', 'construction', 'capitalism', 'capitalist', 'communism', 'father'], 'en')
     sim_en_m2m.generate_semantic_relation_matrix()
     
-    print ('mbart:')
-    sim_en_mbart = similar('mbart', ['red', 'green', 'blue', 'color', 'paint'], 'en_XX')
+    print ('mbart/english:')
+    sim_en_mbart = similar('mbart', ['small', 'short', 'child', 'wife', 'mother', 'construction', 'capitalism', 'capitalist', 'communism', 'father'], 'en_XX')
     sim_en_mbart.generate_semantic_relation_matrix()
     
-    # print ('spanish:')
+    # print ('m2m/spanish:')
     # sim_es_m2m = similar('m2m', ['pequeño', 'corto', 'niño', 'esposa', 'madre'], 'es')
     # sim_es_m2m.generate_semantic_relation_matrix()
     
-    # print ('spanish:')
+    # print ('mbart/spanish:')
     # sim_es_mbart = similar('mbart', ['pequeño', 'corto', 'niño', 'esposa', 'madre'], 'es_XX')
     # sim_es_mbart.generate_semantic_relation_matrix()
+    
+    # print ('m2m/chinese:')
+    # sim_zh_m2m = similar('m2m', ['小', '短', '儿童', '妻子', '母亲'], 'zh')
+    # sim_zh_m2m.generate_semantic_relation_matrix()
+    
+    # print ('mbart/chinese:')
+    # sim_zh_mbart = similar('mbart', ['小', '短', '儿童', '妻子', '母亲'], 'zh_CN')
+    # sim_zh_mbart.generate_semantic_relation_matrix()
     
     # print ('russian:')
     # sim_ru = similar(model, ['небольшой', 'короткий', 'ребенок', 'жена', 'мать'], 'ru')
     # sim_ru.generate_semantic_relation_matrix()
-    
-    # print ('chinese:')
-    # sim_zh = similar(model, ['小', '短', '儿童', '妻子', '母亲'], 'zh')
-    # sim_zh.generate_semantic_relation_matrix()
 
 
 def m2m_example_translate():
@@ -171,17 +174,43 @@ def mbart_example_translate():
     print ('back 2 english: ', out_zh_en)
     print ('')
 
-def mt5_example_translate():
+def mt0_example_translate():
     src = 'The sun rose over the mountains, casting a golden glow across the valley.'
     print ('source: ', src)
     print ('translating source sentence...\n')
     
-    t5_model = t5()
-    res = t5_model.translate(src, 'English', 'French')
-    print ('french trans: ', res)
+    mt0_model = mt0()
+    out_es = mt0_model.translate(src, 'english', 'spanish')
+    out_fr = mt0_model.translate(src, 'english', 'french')
+    out_da = mt0_model.translate(src, 'english', 'danish')
+    out_ja = mt0_model.translate(src, 'english', 'japanese')
+    out_zh = mt0_model.translate(src, 'english', 'chinese')
+
+    # translate back into english
+    out_es_en = mt0_model.translate(out_es, 'spanish', 'english')
+    print ('spanish trans: ', out_es)
+    print ('back 2 english: ', out_es_en)
+    print ('')
     
-    res = t5_model.translate(src, 'English', 'German')
-    print ('german trans: ', res)
+    out_fr_en = mt0_model.translate(out_fr, 'french', 'english')
+    print ('french trans: ', out_fr)
+    print ('back 2 english: ', out_fr_en)
+    print ('')
+    
+    out_da_en = mt0_model.translate(out_da, 'danish', 'english')
+    print ('danish trans: ', out_da)
+    print ('back 2 english: ', out_da_en)
+    print ('')
+    
+    out_ja_en = mt0_model.translate(out_ja, 'japanese', 'english')
+    print ('japanese trans: ', out_ja)
+    print ('back 2 english: ', out_ja_en)
+    print ('')
+
+    out_zh_en = mt0_model.translate(out_zh, 'chinese', 'english')
+    print ('chinese trans: ', out_zh)
+    print ('back 2 english: ', out_zh_en)
+    print ('')
   
 if __name__ == "__main__":
     main()

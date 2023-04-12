@@ -1,6 +1,6 @@
 from transformers import M2M100ForConditionalGeneration, M2M100Tokenizer
 from transformers import MBartForConditionalGeneration, MBart50TokenizerFast
-from typing import List
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
 """
 M2M LANGUAGES:
@@ -25,6 +25,7 @@ class m2m100:
         self.model = M2M100ForConditionalGeneration.from_pretrained('facebook/m2m100_1.2B')
         self.tokenizer = M2M100Tokenizer.from_pretrained('facebook/m2m100_1.2B')
         self.input_embed = self.model.get_input_embeddings()
+        #self.encoder = self.model.get_encoder()
     
     def translate(self, src: str, src_lang: str, tgt_lang: str):
         self.tokenizer.src_lang = src_lang
@@ -36,6 +37,8 @@ class m2m100:
     def embed(self, src: str, lang: str):
         self.tokenizer.src_lang = lang
         encoded = self.tokenizer(src, return_tensors='pt')
+        print ('encoded: ', encoded.input_ids)
+        #embeded = self.encoder.embed(encoded.input_ids)
         embeded = self.input_embed.forward(encoded.input_ids)
         return embeded
 
@@ -65,5 +68,125 @@ class mbart:
     def embed(self, src: str, lang: str):
         self.tokenizer.src_lang = lang
         encoded = self.tokenizer(src, return_tensors='pt')
+        print ('encoded: ', encoded.input_ids)
         embeded = self.input_embed.forward(encoded.input_ids)
         return embeded
+
+"""
+Afrikaans
+Amharic
+Arabic
+Azerbaijani
+Belarusian
+Bulgarian
+Bengali
+Catalan
+Cebuano
+Corsican
+Czech
+Welsh
+Danish
+German
+Greek
+English
+Esperanto
+Spanish
+Estonian
+Basque
+Persian
+Finnish
+fil
+French
+Western Frisian
+Irish
+Scottish Gaelic
+Galician
+Gujarati
+Hausa
+haw
+Hindi
+hmn
+Haitian
+Hungarian
+Armenian
+Igbo
+Icelandic
+Italian
+iw
+Japanese
+Javanese
+Georgian
+Kazakh
+Khmer
+Kannada
+Korean
+Kurdish
+Kyrgyz
+Latin
+Luxembourgish
+Lao
+Lithuanian
+Latvian
+Malagasy
+Māori
+Macedonian
+Malayalam
+Mongolian
+Marathi
+Malay
+Maltese
+Burmese
+Nepali
+Dutch
+Norwegian
+Chichewa
+Panjabi
+Polish
+Pashto
+Portuguese
+Romanian
+Russian
+Sindhi
+Sinhala
+Slovak
+Slovenian
+Samoan
+Shona
+Somali
+Albanian
+Serbian
+Southern Sotho
+Sundanese
+Swedish
+Swahili
+Tamil
+Telugu
+Tajik
+Thai
+Turkish
+Ukrainian
+und
+Urdu
+Uzbek
+Vietnamese
+Xhosa
+Yiddish
+Yoruba
+Chinese
+Zulu
+"""
+
+class mt0:
+    def __init__(self):
+        self.model = AutoModelForSeq2SeqLM.from_pretrained('bigscience/mt0-large')
+        self.tokenizer = AutoTokenizer.from_pretrained('bigscience/mt0-large')
+        #self.input_embed = self.model.get_input_embeddings()
+        
+    def translate(self, src: str, _src_lang: str, _tgt_lang: str):
+        inputs = self.tokenizer.encode('translate from ' + _src_lang + ' to ' + _tgt_lang + ': ' + src, return_tensors='pt')
+        generated = self.model.generate(inputs, max_new_tokens=200)
+        output = self.tokenizer.decode(generated[0])
+        return output
+    
+    def embed(self, src: str, lang: str):
+        raise NotImplementedError

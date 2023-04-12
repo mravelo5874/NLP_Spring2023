@@ -1,5 +1,5 @@
 from typing import List
-from facebook import m2m100, mbart
+from multi_lingual_models import m2m100, mbart
 import torch
 import numpy as np
 from numpy.linalg import norm
@@ -61,6 +61,11 @@ class similar:
         cbar = ax.figure.colorbar(im, cax=cbaxes)
         cbar.ax.set_ylabel('', rotation=-90, va='bottom')
         ax.yaxis.set_label_position('left')
+        # Add the values to each cell
+        for i in range(len(xlabs)):
+            for j in range(len(ylabs)):
+                if (sim_matrix[i, j] > 0.0):
+                    text = ax.text(j, i, round(sim_matrix[i, j], 3), ha = "center", va = "center", color = "black")
         # rotate y-axis labels
         plt.setp(ax.get_xticklabels(), rotation=-40, ha='right', rotation_mode='anchor')
         plt.show()
