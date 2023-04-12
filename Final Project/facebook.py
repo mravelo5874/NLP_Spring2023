@@ -15,7 +15,7 @@ class m2m100:
         return self.encoded_str
     
     def decode(self, tgt_lang: str) -> str:
-        tokens = self.model.generate(**self.encoded_str, forced_bos_token_id=self.tokenizer.get_lang_id(tgt_lang), max_new_tokens=256)
+        tokens = self.model.generate(**self.encoded_str, forced_bos_token_id=self.tokenizer.get_lang_id(tgt_lang), max_new_tokens=200)
         output = self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
         return output
     

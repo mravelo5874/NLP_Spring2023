@@ -45,6 +45,10 @@ def main():
     elif in_args.task == 'sim': similarity() 
     
 def similarity():
+    print ('english:')
+    sim_en = similar(['dog', 'cat', 'house', 'mouse'], 'en')
+    sim_en.generate_semantic_relation_matrix()
+    return
     
     print ('english:')
     sim_en = similar(['small', 'short', 'child', 'wife', 'mother'], 'en')
@@ -53,6 +57,15 @@ def similarity():
     print ('spanish:')
     sim_es = similar(['pequeño', 'corto', 'niño', 'esposa', 'madre'], 'es')
     sim_es.generate_semantic_relation_matrix()
+    
+    print ('russian:')
+    sim_ru = similar(['небольшой', 'короткий', 'ребенок', 'жена', 'мать'], 'ru')
+    sim_ru.generate_semantic_relation_matrix()
+    
+    print ('chinese:')
+    sim_zh = similar(['小', '短', '儿童', '妻子', '母亲'], 'zh')
+    sim_zh.generate_semantic_relation_matrix()
+
 
 def example_translate():
     ''' example sentences: '''
