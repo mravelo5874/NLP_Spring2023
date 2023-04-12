@@ -1,15 +1,18 @@
 from typing import List
-from facebook import m2m100
+from facebook import m2m100, mbart
 import torch
 import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
 
 class similar:
-    def __init__(self, _words: List[str], _lang: str):
+    def __init__(self, _model: str, _words: List[str], _lang: str):
+        
+        if _model == 'm2m': self.model = m2m100()
+        elif _model == 'mbart': self.model = mbart()
+        
         self.words = _words
         self.lang = _lang
-        self.model = m2m100()
         self.vectors = []
         self.sim_vectors = []
         
@@ -19,12 +22,10 @@ class similar:
     def generate_semantic_relation_matrix(self):
         # get embedding vector for each word
         for i in range(len(self.words)):
-            self.model.encode(self.words[i], self.lang)
-            input_embed = self.model.get_model().get_input_embeddings()
-            tokens = self.model.get_tokens()
-            res = input_embed.forward(tokens)
+            res = self.model.embed(self.words[i], self.lang)
             # remove first dim
             res = torch.squeeze(res, dim=0)
+            print ('word: ', self.words[i], ', embed shape: ', res.shape)
             # sum vectors together into one [1024] vector
             res = res.sum(dim=0)
             self.vectors.append(res.detach().numpy())
