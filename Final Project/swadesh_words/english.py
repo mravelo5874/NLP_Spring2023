@@ -48,7 +48,7 @@ eng_110 = [
 'lie down',
 'liver',
 'long',
-'head',
+'head louse',
 'male',
 'many',
 'meat',
