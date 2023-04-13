@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 import transformers as trans
 from multi_lingual_models import m2m100, mbart, mt0
-from similarity import mono_sim
+from similarity import mono_sim, duo_sim
 
 ''' example sentences: '''
 # 'The sun rose over the mountains, casting a golden glow across the valley.'
@@ -12,8 +12,10 @@ from similarity import mono_sim
 
 @dataclass
 class IN_ARGS():
-    task: str
     model: str
+    task: str
+    l0: str = 'english'
+    l1: str = 'spanish'
 
 @dataclass
 class OUT_ARGS():
@@ -37,36 +39,45 @@ def main():
     elif in_args.task == 'example' and in_args.model == 'mt0': mt0_example_translate()
     
     # similarity matrix generation
-    elif in_args.task == 'sim' and in_args.model == 'm2m': similarity('m2m')
+    elif in_args.task == 'mono-sim': mono_similarity(in_args.model)
+    # similarity between languages
+    elif in_args.task == 'duo-sim' and in_args.l0 != '' and in_args.l1 != '': duo_similarity(in_args.model, in_args.l0, in_args.l1)
     
     
-    else: print ('[ERROR] Input arguments did not match any task or model.')
-    
-def similarity(model: str):
+    else: print ('[ERROR] Input task did not match any task (example, mono-sim, duo-sim).')
+
+def duo_similarity(_model: str, _lang_0: str, _lang_1: str):
+    print ('computing similarity between languages: %s and %s. This may take some time...' % (_lang_0, _lang_1))
+    word_list = ['small', 'short', 'child', 'wife', 'mother', 'construction', 'capitalism', 'capitalist', 'communism', 'father'] 
+    d_sim = duo_sim(_model, word_list, _lang_0, _lang_1)
+    res = d_sim.compute_similarity()
+    print ('The similarity between %s and %s is: %f' % (_lang_0, _lang_1, res))
+
+def mono_similarity(_model: str):
 
     print ('m2m/english:')
     sim_en_m2m = mono_sim('m2m', ['small', 'short', 'child', 'wife', 'mother', 'construction', 'capitalism', 'capitalist', 'communism', 'father'], 'en')
-    sim_en_m2m.generate_semantic_relation_matrix()
+    sim_en_m2m.semantic_relation_matrix()
     
     print ('mbart/english:')
     sim_en_mbart = mono_sim('mbart', ['small', 'short', 'child', 'wife', 'mother', 'construction', 'capitalism', 'capitalist', 'communism', 'father'], 'en_XX')
-    sim_en_mbart.generate_semantic_relation_matrix()
+    sim_en_mbart.semantic_relation_matrix()
     
     print ('m2m/spanish:')
     sim_es_m2m = mono_sim('m2m', ['pequeño', 'corto', 'niño', 'esposa', 'madre', 'construcción', 'capitalismo', 'capitalista', 'comunismo', 'padre'], 'es')
-    sim_es_m2m.generate_semantic_relation_matrix()
+    sim_es_m2m.semantic_relation_matrix()
     
     print ('mbart/spanish:')
     sim_es_mbart = mono_sim('mbart', ['pequeño', 'corto', 'niño', 'esposa', 'madre', 'construcción', 'capitalismo', 'capitalista', 'comunismo', 'padre'], 'es_XX')
-    sim_es_mbart.generate_semantic_relation_matrix()
+    sim_es_mbart.semantic_relation_matrix()
     
     print ('m2m/chinese:')
     sim_zh_m2m = mono_sim('m2m', ['小', '短', '儿童', '妻子', '母亲', '建筑工程', '资本主义', '资本家', '共产主义', '父亲'], 'zh')
-    sim_zh_m2m.generate_semantic_relation_matrix()
+    sim_zh_m2m.semantic_relation_matrix()
     
     print ('mbart/chinese:')
     sim_zh_mbart = mono_sim('mbart', ['小', '短', '儿童', '妻子', '母亲', '建筑工程', '资本主义', '资本家', '共产主义', '父亲'], 'zh_CN')
-    sim_zh_mbart.generate_semantic_relation_matrix()
+    sim_zh_mbart.semantic_relation_matrix()
     
     # print ('russian:')
     # sim_ru = similar(model, ['небольшой', 'короткий', 'ребенок', 'жена', 'мать'], 'ru')

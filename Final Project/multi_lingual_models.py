@@ -1,24 +1,7 @@
 from transformers import M2M100ForConditionalGeneration, M2M100Tokenizer
 from transformers import MBartForConditionalGeneration, MBart50TokenizerFast
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
-
-"""
-M2M LANGUAGES:
-Afrikaans (af), Amharic (am), Arabic (ar), Asturian (ast), Azerbaijani (az), Bashkir (ba), Belarusian (be), 
-Bulgarian (bg), Bengali (bn), Breton (br), Bosnian (bs), Catalan; Valencian (ca), Cebuano (ceb), Czech (cs), 
-Welsh (cy), Danish (da), German (de), Greeek (el), English (en), Spanish (es), Estonian (et), Persian (fa), 
-Fulah (ff), Finnish (fi), French (fr), Western Frisian (fy), Irish (ga), Gaelic; Scottish Gaelic (gd), Galician (gl), 
-Gujarati (gu), Hausa (ha), Hebrew (he), Hindi (hi), Croatian (hr), Haitian; Haitian Creole (ht), Hungarian (hu), 
-Armenian (hy), Indonesian (id), Igbo (ig), Iloko (ilo), Icelandic (is), Italian (it), Japanese (ja), Javanese (jv), 
-Georgian (ka), Kazakh (kk), Central Khmer (km), Kannada (kn), Korean (ko), Luxembourgish; Letzeburgesch (lb), 
-Ganda (lg), Lingala (ln), Lao (lo), Lithuanian (lt), Latvian (lv), Malagasy (mg), Macedonian (mk), Malayalam (ml), 
-Mongolian (mn), Marathi (mr), Malay (ms), Burmese (my), Nepali (ne), Dutch; Flemish (nl), Norwegian (no), 
-Northern Sotho (ns), Occitan (post 1500) (oc), Oriya (or), Panjabi; Punjabi (pa), Polish (pl), Pushto; Pashto (ps), 
-Portuguese (pt), Romanian; Moldavian; Moldovan (ro), Russian (ru), Sindhi (sd), Sinhala; Sinhalese (si), Slovak (sk), 
-Slovenian (sl), Somali (so), Albanian (sq), Serbian (sr), Swati (ss), Sundanese (su), Swedish (sv), Swahili (sw), 
-Tamil (ta), Thai (th), Tagalog (tl), Tswana (tn), Turkish (tr), Ukrainian (uk), Urdu (ur), Uzbek (uz), Vietnamese (vi), 
-Wolof (wo), Xhosa (xh), Yiddish (yi), Yoruba (yo), Chinese (zh), Zulu (zu)
-"""
+from utils import m2m_abbr, mbart_abbr
 
 class m2m100:
     def __init__(self):
@@ -41,16 +24,9 @@ class m2m100:
         #embeded = self.encoder.embed(encoded.input_ids)
         embeded = self.input_embed.forward(encoded.input_ids)
         return embeded
-
-"""
-Arabic (ar_AR), Czech (cs_CZ), German (de_DE), English (en_XX), Spanish (es_XX), Estonian (et_EE), Finnish (fi_FI), French (fr_XX), 
-Gujarati (gu_IN), Hindi (hi_IN), Italian (it_IT), Japanese (ja_XX), Kazakh (kk_KZ), Korean (ko_KR), Lithuanian (lt_LT), Latvian (lv_LV), 
-Burmese (my_MM), Nepali (ne_NP), Dutch (nl_XX), Romanian (ro_RO), Russian (ru_RU), Sinhala (si_LK), Turkish (tr_TR), Vietnamese (vi_VN), 
-Chinese (zh_CN), Afrikaans (af_ZA), Azerbaijani (az_AZ), Bengali (bn_IN), Persian (fa_IR), Hebrew (he_IL), Croatian (hr_HR), 
-Indonesian (id_ID), Georgian (ka_GE), Khmer (km_KH), Macedonian (mk_MK), Malayalam (ml_IN), Mongolian (mn_MN), Marathi (mr_IN), 
-Polish (pl_PL), Pashto (ps_AF), Portuguese (pt_XX), Swedish (sv_SE), Swahili (sw_KE), Tamil (ta_IN), Telugu (te_IN), Thai (th_TH), 
-Tagalog (tl_XX), Ukrainian (uk_UA), Urdu (ur_PK), Xhosa (xh_ZA), Galician (gl_ES), Slovene (sl_SI)
-"""
+    
+    def get_language_id(lang: str):
+        return m2m_abbr.get(lang.lower())
 
 class mbart:
     def __init__(self):
@@ -71,110 +47,9 @@ class mbart:
         print ('encoded: ', encoded.input_ids)
         embeded = self.input_embed.forward(encoded.input_ids)
         return embeded
-
-"""
-Afrikaans
-Amharic
-Arabic
-Azerbaijani
-Belarusian
-Bulgarian
-Bengali
-Catalan
-Cebuano
-Corsican
-Czech
-Welsh
-Danish
-German
-Greek
-English
-Esperanto
-Spanish
-Estonian
-Basque
-Persian
-Finnish
-fil
-French
-Western Frisian
-Irish
-Scottish Gaelic
-Galician
-Gujarati
-Hausa
-haw
-Hindi
-hmn
-Haitian
-Hungarian
-Armenian
-Igbo
-Icelandic
-Italian
-iw
-Japanese
-Javanese
-Georgian
-Kazakh
-Khmer
-Kannada
-Korean
-Kurdish
-Kyrgyz
-Latin
-Luxembourgish
-Lao
-Lithuanian
-Latvian
-Malagasy
-Māori
-Macedonian
-Malayalam
-Mongolian
-Marathi
-Malay
-Maltese
-Burmese
-Nepali
-Dutch
-Norwegian
-Chichewa
-Panjabi
-Polish
-Pashto
-Portuguese
-Romanian
-Russian
-Sindhi
-Sinhala
-Slovak
-Slovenian
-Samoan
-Shona
-Somali
-Albanian
-Serbian
-Southern Sotho
-Sundanese
-Swedish
-Swahili
-Tamil
-Telugu
-Tajik
-Thai
-Turkish
-Ukrainian
-und
-Urdu
-Uzbek
-Vietnamese
-Xhosa
-Yiddish
-Yoruba
-Chinese
-Zulu
-"""
+    
+    def get_language_id(lang: str):
+        return mbart_abbr.get(lang.lower())
 
 class mt0:
     def __init__(self):
