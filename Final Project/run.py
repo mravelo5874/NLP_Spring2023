@@ -27,6 +27,9 @@ pereira_words_english = ['ability', 'accomplished', 'angry', 'apartment', 'appla
                          'stupid', 'successful', 'sugar', 'suspect', 'table', 'taste', 'team', 'texture', 'time', 'tool', 'toy', 'tree', 'trial', 'tried', 'typical', 
                          'unaware', 'usable', 'useless', 'vacation', 'war', 'wash', 'weak', 'wear', 'weather', 'willingly', 'word']
 
+swadesh_yakhontov_english = [ 'I', 'you', 'this', 'who', 'what', 'one', 'two', 'fish', 'dog', 'louse', 'blood', 'bone', 'egg', 'horn', 'tail', 'ear', 'eye', 'nose', 
+                             'tooth', 'tongue', 'hand', 'know', 'die', 'give', 'sun', 'moon', 'water', 'salt', 'stone', 'wind', 'fire', 'year', 'full', 'new', 'name']
+
 @dataclass
 class IN_ARGS():
     model: str
