@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from multi_lingual_models import m2m100, mbart, mt0
 from similarity import mono_sim, duo_sim
 from typing import List
+from nltk.corpus import swadesh110, swadesh207
 
 ''' word lists '''
 english_words_small = ['small', 'short', 'child', 'wife', 'mother', 'construction', 'capitalism', 'capitalist', 'communism', 'father']
