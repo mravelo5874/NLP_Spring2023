@@ -119,10 +119,11 @@ def duo_similarity(_model: str, _lang_0: str, _lang_1: str, _words0: List[str], 
     print ('Computing similarity between languages: \'%s\' and \'%s\'. This may take some time...' % (_lang_0, _lang_1))
     d_sim = duo_sim(_model, _lang_0, _lang_1, _words0, _words1)
     res = d_sim.compute_similarity(_sim_func)
-    print ('The similarity between \'%s\' and \'%s\' using \'%s\' is: %f' % (_lang_0, _lang_1, _model, res))
+    norm_res = utils.inverse_interpolation(-1.0, 1.0, res)
+    print ('The similarity between \'%s\' and \'%s\' using \'%s\' is: %f (between -1 and 1) := %f (between 0 and 1).' % (_lang_0, _lang_1, _model, res, norm_res))
 
 def mono_similarity(_model: str, _lang: str, _words: List[str]):
-    print ('Computing mono-similarity using \'%s\' with \'%s\'.' % (_model, _lang))
+    print ('Computing mono-similarity using \'%s\' with \'%s\'. This may take some time...' % (_model, _lang))
     mono = mono_sim(_model, _words, _lang)
     mono.semantic_relation_matrix()
 
