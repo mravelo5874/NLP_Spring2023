@@ -3,7 +3,11 @@ from transformers import MBartForConditionalGeneration, MBart50TokenizerFast
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from utils import m2m_abbr, mbart_abbr
 
-class m2m100:
+class _model_:
+    def __init__(self):
+        pass
+
+class m2m100(_model_):
     def __init__(self):
         self.model = M2M100ForConditionalGeneration.from_pretrained('facebook/m2m100_1.2B')
         self.tokenizer = M2M100Tokenizer.from_pretrained('facebook/m2m100_1.2B')
@@ -20,15 +24,15 @@ class m2m100:
     def embed(self, src: str, lang: str):
         self.tokenizer.src_lang = lang
         encoded = self.tokenizer(src, return_tensors='pt')
-        print ('encoded: ', encoded.input_ids)
+        #print ('encoded: ', encoded.input_ids)
         #embeded = self.encoder.embed(encoded.input_ids)
         embeded = self.input_embed.forward(encoded.input_ids)
         return embeded
     
-    def get_language_id(lang: str):
+    def get_language_id(self, lang: str):
         return m2m_abbr.get(lang.lower())
 
-class mbart:
+class mbart(_model_):
     def __init__(self):
         self.model = MBartForConditionalGeneration.from_pretrained('facebook/mbart-large-50-many-to-many-mmt')
         self.tokenizer = MBart50TokenizerFast.from_pretrained('facebook/mbart-large-50-many-to-many-mmt')
@@ -44,14 +48,14 @@ class mbart:
     def embed(self, src: str, lang: str):
         self.tokenizer.src_lang = lang
         encoded = self.tokenizer(src, return_tensors='pt')
-        print ('encoded: ', encoded.input_ids)
+        #print ('encoded: ', encoded.input_ids)
         embeded = self.input_embed.forward(encoded.input_ids)
         return embeded
     
     def get_language_id(lang: str):
         return mbart_abbr.get(lang.lower())
 
-class mt0:
+class mt0(_model_):
     def __init__(self):
         self.model = AutoModelForSeq2SeqLM.from_pretrained('bigscience/mt0-large')
         self.tokenizer = AutoTokenizer.from_pretrained('bigscience/mt0-large')
@@ -64,4 +68,7 @@ class mt0:
         return output
     
     def embed(self, src: str, lang: str):
+        raise NotImplementedError
+
+    def get_language_id(lang: str):
         raise NotImplementedError

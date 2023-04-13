@@ -1,3 +1,37 @@
+import numpy as np
+from numpy.linalg import norm
+from pandas import DataFrame as df
+from scipy.spatial import distance
+from typing import List
+
+def inverse_interpolation(p0, p1, val):
+    # clamp value to range if outside
+    if (val > p1): return 1.0
+    elif (val < p0): return 0.0
+    # return t value
+    return (val - p0) / (p1 - p0)
+    
+def cosine_sim(A, B):
+    return np.dot(A, B) / (norm(A)*norm(B))
+    
+def cosine_dist(sim_0, sim_1):
+    costine_dist =  distance.cosine(sim_0, sim_1) # 1 - cosine_sim(sim_0, sim_1)
+    return costine_dist
+
+def spearman(sim_0, sim_1):
+    data_frame = df({'lang0': sim_0, 'lang1': sim_1 })
+    spearman_correlation = data_frame['lang0'].corr(data_frame['lang1'], method='spearman')
+    return spearman_correlation
+
+''' translates an english list into target language '''
+def translate_english_words(_words: List[str], _model, _tgt_lang: str):
+    # make sure not translating english -> english
+    if _tgt_lang == 'english': return _words
+    trans_list = []
+    for i in range(len(_words)):
+        trans_list.append(_model.translate(_words[i], _model.get_language_id('english'), _model.get_language_id(_tgt_lang))[0].lower())
+    return trans_list
+
 m2m_abbr = {    
     'afrikaans':        'af', 
     'amharic':          'am', 
@@ -16,7 +50,7 @@ m2m_abbr = {
     'welsh':            'cy', 
     'danish':           'da', 
     'german':           'de',
-    'greeek':           'el', 
+    'greek':            'el', 
     'english':          'en', 
     'spanish':          'es', 
     'estonian':         'et', 
