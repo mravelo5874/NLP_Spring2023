@@ -1,4 +1,6 @@
 import numpy as np
+import json
+import os
 from numpy.linalg import norm
 from pandas import DataFrame as df
 from scipy.spatial import distance
@@ -23,13 +25,40 @@ def spearman(sim_0, sim_1):
     spearman_correlation = data_frame['lang0'].corr(data_frame['lang1'], method='spearman')
     return spearman_correlation
 
+# write list to memory
+def write_list(a_list, file_name):
+    with open(file_name, 'w') as fp:
+        json.dump(a_list, fp)
+        print ('created list file: ', file_name)
+
+# read list from memory
+def read_list(file_name):
+    with open(file_name, 'rb') as fp:
+        n_list = json.load(fp)
+        print ('loaded from list file: ', file_name)
+        return n_list
+
 ''' translates an english list into target language '''
-def translate_english_words(_words: List[str], _model, _tgt_lang: str):
+def translate_english_words(_words: List[str], _model, _tgt_lang: str, _words_type: str):
     # make sure not translating english -> english
     if _tgt_lang == 'english': return _words
+    
+    # check if list has already been computed
+    path = './word_lists/' + _tgt_lang + '_' + _words_type + '_' + _model.name() + '.json'
+    if os.path.isfile(path):
+        return read_list(path)
+    
     trans_list = []
     for i in range(len(_words)):
-        trans_list.append(_model.translate(_words[i], _model.get_language_id('english'), _model.get_language_id(_tgt_lang))[0].lower())
+        # translate word and lower-case
+        trans_word: str = _model.translate(_words[i], _model.get_language_id('english'), _model.get_language_id(_tgt_lang))[0].lower()
+        # if multiple words, get last word (removes 'la', 'le', 'el', 'los', 'les', etc...)
+        if trans_word.find(' '):
+            trans_splice = trans_word.split(' ')
+            trans_word = trans_splice[-1]
+        trans_list.append(trans_word)
+    # write list to file
+    write_list(trans_list, path)
     return trans_list
 
 m2m_abbr = {    

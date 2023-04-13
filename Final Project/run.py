@@ -1,5 +1,7 @@
 import transformers as trans
 import utils
+import time
+import math
 from dataclasses import dataclass, field
 from multi_lingual_models import m2m100, mbart, mt0
 from similarity import mono_sim, duo_sim
@@ -10,6 +12,19 @@ from typing import List
 # python run.py --model m2m --task mono-sim --l0 english
 # python run.py --model m2m --task duo-sim --l0 english --l1 spanish
 
+''' 4/13/2023 examples with duo-sim '''
+# C:\Users\Marco\Documents\GitHub\NLP_Spring2023\Final Project>python run.py --model m2m --task duo-sim --l0 english --l1 french
+# english words:  ['small', 'short', 'child', 'wife', 'mother', 'construction', 'capitalism', 'capitalist', 'communism', 'father']
+# french words:  ['petite', 'courte', 'enfant', 'épouse', 'mère', 'construction', 'le capitalisme', 'capitaliste', 'communisme', 'père']
+# Computing similarity between languages: english and french. This may take some time...
+# The similarity between english and french is: 0.539631
+
+# C:\Users\Marco\Documents\GitHub\NLP_Spring2023\Final Project>python run.py --model m2m --task duo-sim --l0 french --l1 spanish
+# french words:  ['petite', 'courte', 'enfant', 'épouse', 'mère', 'construction', 'le capitalisme', 'capitaliste', 'communisme', 'père']
+# spanish words:  ['pequeño', 'corto', 'niño', 'mujer', 'madre', 'construcción', 'el capitalismo', 'capitalista', 'el comunismo', 'padre']
+# Computing similarity between languages: french and spanish. This may take some time...
+# The similarity between french and spanish is: 0.600580
+
 ''' example sentences: '''
 # 'The sun rose over the mountains, casting a golden glow across the valley.'
 # 'The city\'s heartbeat echoed through the night, a symphony of sirens, footsteps, and distant laughter, as the streets pulsed with life and energy, relentless and unforgiving.'
@@ -18,9 +33,27 @@ from typing import List
 # 'The scent of roses wafted through the air, mingling with the salty tang of the sea, as the sun dipped below the horizon, casting the world into twilight.'
 
 ''' word lists '''
-english_words_0 = ['small', 'short', 'child', 'wife', 'mother', 'construction', 'capitalism', 'capitalist', 'communism', 'father']
-spanish_words_0 = ['pequeño', 'corto', 'niño', 'esposa', 'madre', 'construcción', 'capitalismo', 'capitalista', 'comunismo', 'padre']
-chinese_words_0 = ['小', '短', '儿童', '妻子', '母亲', '建筑工程', '资本主义', '资本家', '共产主义', '父亲']
+english_words_small = ['small', 'short', 'child', 'wife', 'mother', 'construction', 'capitalism', 'capitalist', 'communism', 'father']
+spanish_words_small = ['pequeño', 'corto', 'niño', 'esposa', 'madre', 'construcción', 'capitalismo', 'capitalista', 'comunismo', 'padre']
+chinese_words_small = ['小', '短', '儿童', '妻子', '母亲', '建筑工程', '资本主义', '资本家', '共产主义', '父亲']
+
+# from https://www.nature.com/articles/s41467-018-03068-4
+pereira_words_english = ['ability', 'accomplished', 'angry', 'apartment', 'applause', 'argument', 'argumentatively', 'art', 'attitude', 'bag', 'ball', 'bar', 
+                         'bear', 'beat', 'bed', 'beer', 'big', 'bird', 'blood', 'body', 'brain', 'broken', 'building', 'burn', 'business', 'camera', 'carefully', 
+                         'challenge', 'charity', 'charming', 'clothes', 'cockroach', 'code', 'collection', 'computer', 'construction', 'cook', 'counting', 
+                         'crazy', 'damage', 'dance', 'dangerous', 'deceive', 'dedication', 'deliberately', 'delivery', 'dessert', 'device', 'dig', 'dinner', 
+                         'disease', 'dissolve', 'disturb', 'do', 'doctor', 'dog', 'dressing', 'driver', 'economy', 'election', 'electron', 'elegance', 'emotion', 
+                         'emotionally', 'engine', 'event', 'experiment', 'extremely', 'feeling', 'fight', 'fish', 'flow', 'food', 'garbage', 'gold', 'great', 
+                         'gun', 'hair', 'help', 'hurting', 'ignorance', 'illness', 'impress', 'invention', 'investigation', 'invisible', 'job', 'jungle', 
+                         'kindness', 'king', 'lady', 'land', 'laugh', 'law', 'left', 'level', 'liar', 'light', 'magic', 'marriage', 'material', 'mathematical', 
+                         'mechanism', 'medication', 'money', 'mountain', 'movement', 'movie', 'music', 'nation', 'news', 'noise', 'obligation', 'pain', 
+                         'personality', 'philosophy', 'picture', 'pig', 'plan', 'plant', 'play', 'pleasure', 'poor', 'prison', 'professional', 'protection', 
+                         'quality', 'reaction', 'read', 'relationship', 'religious', 'residence', 'road', 'sad', 'science', 'seafood', 'sell', 'sew', 'sexy', 
+                         'shape', 'ship', 'show', 'sign', 'silly', 'sin', 'skin', 'smart', 'smiling', 'solution', 'soul', 'sound', 'spoke', 'star', 'student', 
+                         'stupid', 'successful', 'sugar', 'suspect', 'table', 'taste', 'team', 'texture', 'time', 'tool', 'toy', 'tree', 'trial', 'tried', 'typical', 
+                         'unaware', 'usable', 'useless', 'vacation', 'war', 'wash', 'weak', 'wear', 'weather', 'willingly', 'word']
+
+
 
 @dataclass
 class IN_ARGS():
@@ -52,7 +85,17 @@ def main():
     elif in_args.task == 'example' and in_args.model == 'mt0': mt0_example_translate()
     
     # similarity matrix generation
-    elif in_args.task == 'mono-sim' and in_args.l0 != '': mono_similarity(in_args.model, in_args.l0, english_words_0)
+    elif in_args.task == 'mono-sim' and in_args.l0 != '': 
+        words = None
+        print ('Gathering word list for mono-sim calculation...')
+        if in_args.model == 'm2m':
+            model = m2m100()
+            words = utils.translate_english_words(english_words_small, model, in_args.l0, 'small')
+        elif in_args.model == 'mbart':
+            model = mbart()
+            words = utils.translate_english_words(english_words_small, model, in_args.l0, 'small')
+        print (in_args.l0, 'words:', words)
+        mono_similarity(in_args.model, in_args.l0, words)
     # similarity between languages
     elif in_args.task == 'duo-sim' and in_args.model != '' and in_args.l0 != '' and in_args.l1 != '':
         words0 = None
@@ -61,57 +104,26 @@ def main():
         print ('Gathering word lists for duo-sim calculation...')
         if in_args.model == 'm2m':
             model = m2m100()
-            words0 = utils.translate_english_words(english_words_0, model, in_args.l0)
-            words1 = utils.translate_english_words(english_words_0, model, in_args.l1)
+            words0 = utils.translate_english_words(english_words_small, model, in_args.l0, 'small')
+            words1 = utils.translate_english_words(english_words_small, model, in_args.l1, 'small')
         elif in_args.model == 'mbart':
             model = mbart()
-            words0 = utils.translate_english_words(english_words_0, model, in_args.l0)
-            words1 = utils.translate_english_words(english_words_0, model, in_args.l1)
-            
-        print (in_args.l0, 'words: ', words0)
-        print (in_args.l1,'words1: ', words1)
+            words0 = utils.translate_english_words(english_words_small, model, in_args.l0, 'small')
+            words1 = utils.translate_english_words(english_words_small, model, in_args.l1, 'small')
+        print (in_args.l0, 'words:', words0)
+        print (in_args.l1, 'words:', words1)
         duo_similarity(in_args.model, in_args.l0, in_args.l1, words0, words1, in_args.sim_func)
     # error 
     else: print ('[ERROR] Input task did not match any task (example, mono-sim, duo-sim).')
 
 def duo_similarity(_model: str, _lang_0: str, _lang_1: str, _words0: List[str], _words1: List[str], _sim_func: str):
-    print ('Computing similarity between languages: %s and %s. This may take some time...' % (_lang_0, _lang_1))
+    print ('Computing similarity between languages: \'%s\' and \'%s\'. This may take some time...' % (_lang_0, _lang_1))
     d_sim = duo_sim(_model, _lang_0, _lang_1, _words0, _words1)
     res = d_sim.compute_similarity(_sim_func)
-    print ('The similarity between %s and %s is: %f' % (_lang_0, _lang_1, res))
-    
-
-    # _lang_0 = 'spanish'
-    # _lang_1 = 'chinese'
-    # print ('Computing similarity between languages: %s and %s. This may take some time...' % (_lang_0, _lang_1))
-    # d_sim = duo_sim(_model, _lang_0, _lang_1, spanish_words_0, chinese_words_0)
-    # res = d_sim.compute_similarity(_sim_func)
-    # print ('The similarity between %s and %s is: %f' % (_lang_0, _lang_1, res))
-    
-    # _lang_0 = 'english'
-    # _lang_1 = 'spanish'
-    # print ('Computing similarity between languages: %s and %s. This may take some time...' % (_lang_0, _lang_1))
-    # d_sim = duo_sim(_model, _lang_0, _lang_1, english_words_0, spanish_words_0)
-    # res = d_sim.compute_similarity(_sim_func)
-    # print ('The similarity between %s and %s is: %f' % (_lang_0, _lang_1, res))
-    
-    # _lang_0 = 'english'
-    # _lang_1 = 'chinese'
-    # print ('Computing similarity between languages: %s and %s. This may take some time...' % (_lang_0, _lang_1))
-    # d_sim = duo_sim(_model, _lang_0, _lang_1, english_words_0, chinese_words_0)
-    # res = d_sim.compute_similarity(_sim_func)
-    # print ('The similarity between %s and %s is: %f' % (_lang_0, _lang_1, res))
-    
-    # _lang_0 = 'chinese'
-    # _lang_1 = 'english'
-    # print ('Computing similarity between languages: %s and %s. This may take some time...' % (_lang_0, _lang_1))
-    # d_sim = duo_sim(_model, _lang_0, _lang_1, chinese_words_0, english_words_0)
-    # res = d_sim.compute_similarity(_sim_func)
-    # print ('The similarity between %s and %s is: %f' % (_lang_0, _lang_1, res))
+    print ('The similarity between \'%s\' and \'%s\' is: %f' % (_lang_0, _lang_1, res))
 
 def mono_similarity(_model: str, _lang: str, _words: List[str]):
-    
-    print ('Computing mono-similarity using %s with language %s' % (_model, _lang))
+    print ('Computing mono-similarity using \'%s\' with \'%s\'.' % (_model, _lang))
     mono = mono_sim(_model, _words, _lang)
     mono.semantic_relation_matrix()
 
@@ -255,4 +267,8 @@ def mt0_example_translate():
     print ('')
   
 if __name__ == "__main__":
+    start_time = time.perf_counter()
     main()
+    end_time = time.perf_counter()
+    elapsed_time = end_time - start_time
+    print("elapsed time: ", round(elapsed_time, 2))

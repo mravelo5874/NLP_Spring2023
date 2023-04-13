@@ -103,10 +103,10 @@ class mono_sim:
                 
     def semantic_relation_matrix(self):
         # words -> vector embeddings
-        self.create_vector_embeddings()
+        self.vectors = self.create_vector_embeddings()
         
         # vector embeddings -> similarity vectors
-        self.generate_similarity_vectors()
+        self.sim_vectors = self.generate_similarity_vectors()
             
         # create 2D matrix and mask 
         sim_array = mono_sim.normalize_results(self.sim_vectors)
