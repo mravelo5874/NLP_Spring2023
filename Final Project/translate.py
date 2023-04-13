@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 import transformers as trans
 from multi_lingual_models import m2m100, mbart, mt0
-from similarity import similar
+from similarity import mono_sim
 
 ''' example sentences: '''
 # 'The sun rose over the mountains, casting a golden glow across the valley.'
@@ -45,28 +45,28 @@ def main():
 def similarity(model: str):
 
     print ('m2m/english:')
-    sim_en_m2m = similar('m2m', ['small', 'short', 'child', 'wife', 'mother', 'construction', 'capitalism', 'capitalist', 'communism', 'father'], 'en')
+    sim_en_m2m = mono_sim('m2m', ['small', 'short', 'child', 'wife', 'mother', 'construction', 'capitalism', 'capitalist', 'communism', 'father'], 'en')
     sim_en_m2m.generate_semantic_relation_matrix()
     
     print ('mbart/english:')
-    sim_en_mbart = similar('mbart', ['small', 'short', 'child', 'wife', 'mother', 'construction', 'capitalism', 'capitalist', 'communism', 'father'], 'en_XX')
+    sim_en_mbart = mono_sim('mbart', ['small', 'short', 'child', 'wife', 'mother', 'construction', 'capitalism', 'capitalist', 'communism', 'father'], 'en_XX')
     sim_en_mbart.generate_semantic_relation_matrix()
     
-    # print ('m2m/spanish:')
-    # sim_es_m2m = similar('m2m', ['pequeño', 'corto', 'niño', 'esposa', 'madre'], 'es')
-    # sim_es_m2m.generate_semantic_relation_matrix()
+    print ('m2m/spanish:')
+    sim_es_m2m = mono_sim('m2m', ['pequeño', 'corto', 'niño', 'esposa', 'madre', 'construcción', 'capitalismo', 'capitalista', 'comunismo', 'padre'], 'es')
+    sim_es_m2m.generate_semantic_relation_matrix()
     
-    # print ('mbart/spanish:')
-    # sim_es_mbart = similar('mbart', ['pequeño', 'corto', 'niño', 'esposa', 'madre'], 'es_XX')
-    # sim_es_mbart.generate_semantic_relation_matrix()
+    print ('mbart/spanish:')
+    sim_es_mbart = mono_sim('mbart', ['pequeño', 'corto', 'niño', 'esposa', 'madre', 'construcción', 'capitalismo', 'capitalista', 'comunismo', 'padre'], 'es_XX')
+    sim_es_mbart.generate_semantic_relation_matrix()
     
-    # print ('m2m/chinese:')
-    # sim_zh_m2m = similar('m2m', ['小', '短', '儿童', '妻子', '母亲'], 'zh')
-    # sim_zh_m2m.generate_semantic_relation_matrix()
+    print ('m2m/chinese:')
+    sim_zh_m2m = mono_sim('m2m', ['小', '短', '儿童', '妻子', '母亲', '建筑工程', '资本主义', '资本家', '共产主义', '父亲'], 'zh')
+    sim_zh_m2m.generate_semantic_relation_matrix()
     
-    # print ('mbart/chinese:')
-    # sim_zh_mbart = similar('mbart', ['小', '短', '儿童', '妻子', '母亲'], 'zh_CN')
-    # sim_zh_mbart.generate_semantic_relation_matrix()
+    print ('mbart/chinese:')
+    sim_zh_mbart = mono_sim('mbart', ['小', '短', '儿童', '妻子', '母亲', '建筑工程', '资本主义', '资本家', '共产主义', '父亲'], 'zh_CN')
+    sim_zh_mbart.generate_semantic_relation_matrix()
     
     # print ('russian:')
     # sim_ru = similar(model, ['небольшой', 'короткий', 'ребенок', 'жена', 'мать'], 'ru')

@@ -5,9 +5,16 @@ import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
 
-class similar:
-    def __init__(self, _model: str, _words: List[str], _lang: str):
+class multi_sim:
+    def __init__(self, _model: str, _words: List[str], _langs: List[str]):
+        if _model == 'm2m': self.model = m2m100()
+        elif _model == 'mbart': self.model = mbart()
         
+        self.words = _words
+        self.langs = _langs
+    
+class mono_sim:
+    def __init__(self, _model: str, _words: List[str], _lang: str):
         if _model == 'm2m': self.model = m2m100()
         elif _model == 'mbart': self.model = mbart()
         
@@ -18,6 +25,13 @@ class similar:
         
     def cosine_sim(self, A, B):
         return np.dot(A, B) / (norm(A)*norm(B))
+    
+    def inverse_interpolation(self, p0, p1, val):
+        # clamp value to range if outside
+        if (val > p1): return 1.0
+        elif (val < p0): return 0.0
+        # return t value
+        return (val - p0) / (p1 - p0)
         
     def generate_semantic_relation_matrix(self):
         # get embedding vector for each word
@@ -38,12 +52,29 @@ class similar:
             
             print ('word: ', self.words[i], ' sim_vec: ', sim_vec)
             self.sim_vectors.append(np.array(sim_vec))
+            
+        # normalize sim matrix using largest and smallest value
+        sim_array = np.array(self.sim_vectors).flatten()
         
+        min_val = 999.0
+        max_val = -999.0
+        for i in range(len(sim_array)):
+            if sim_array[i] < min_val:
+                min_val = sim_array[i]
+            if sim_array[i] > max_val and sim_array[i] < 0.999:
+                max_val = sim_array[i]
+                
+        print ('min: ', min_val, ', max: ', max_val)
+        for i in range(len(sim_array)):
+            if sim_array[i] < 0.999:
+                sim_array[i] = self.inverse_interpolation(min_val, max_val, sim_array[i])
+                        
         # create 2D matrix and mask 
-        sim_matrix = np.reshape(a=np.array(self.sim_vectors), newshape=[len(self.words), len(self.words)])
+        self.sim_matrix = np.reshape(a=sim_array, newshape=[len(self.words), len(self.words)])
         mask = np.zeros_like(sim_matrix, dtype=np.bool)
         mask[np.triu_indices_from(mask)] = True
         sim_matrix = np.where(mask, sim_matrix, 0)
+        
         # create plot
         # Labels
         xlabs = self.words
@@ -62,10 +93,12 @@ class similar:
         cbar.ax.set_ylabel('', rotation=-90, va='bottom')
         ax.yaxis.set_label_position('left')
         # Add the values to each cell
+        '''
         for i in range(len(xlabs)):
             for j in range(len(ylabs)):
                 if (sim_matrix[i, j] > 0.0):
                     text = ax.text(j, i, round(sim_matrix[i, j], 3), ha = "center", va = "center", color = "black")
+        '''
         # rotate y-axis labels
         plt.setp(ax.get_xticklabels(), rotation=-40, ha='right', rotation_mode='anchor')
         plt.show()
