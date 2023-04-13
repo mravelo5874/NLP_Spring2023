@@ -23,10 +23,13 @@ class m2m100(_model_):
         self.model.to(self.device)
         print ('device set to: ', self.device)
     
-    def translate(self, src: str, src_lang: str, tgt_lang: str):
-        self.tokenizer.src_lang = src_lang
+    def translate(self, src: str, _src_lang: str, _tgt_lang: str):
+        # return src if no translation is needed
+        if _src_lang == _tgt_lang: return src
+        # translate src
+        self.tokenizer.src_lang = _src_lang
         tokenized = self.tokenizer(src, return_tensors='pt').to(self.device)
-        tokens = self.model.generate(**tokenized, forced_bos_token_id=self.tokenizer.get_lang_id(tgt_lang), max_new_tokens=200)
+        tokens = self.model.generate(**tokenized, forced_bos_token_id=self.tokenizer.get_lang_id(_tgt_lang), max_new_tokens=200)
         output = self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
         return output
     
@@ -55,6 +58,9 @@ class mbart(_model_):
         print ('device set to: ', self.device)
         
     def translate(self, src: str, _src_lang: str, _tgt_lang: str):
+        # return src if no translation is needed
+        if _src_lang == _tgt_lang: return src
+        # translate src
         self.tokenizer.src_lang = _src_lang
         encoded_hi = self.tokenizer(src, return_tensors='pt').to(self.device)
         generated_tokens = self.model.generate(**encoded_hi,forced_bos_token_id=self.tokenizer.lang_code_to_id[_tgt_lang], max_new_tokens=200)
@@ -68,9 +74,10 @@ class mbart(_model_):
         embeded = self.input_embed.forward(encoded.input_ids)
         return embeded
     
-    def get_language_id(lang: str):
+    def get_language_id(self, lang: str):
         return mbart_abbr.get(lang.lower())
 
+''' not in use atm '''
 class mt0(_model_):
     def __init__(self):
         self.model = AutoModelForSeq2SeqLM.from_pretrained('bigscience/mt0-large')
