@@ -5,10 +5,81 @@ import utils
 from typing import List
 from multi_lingual_models import m2m100, mbart
 
+''' used to compute similarity between multiple languages in a NxN matrix '''
+class multi_sim:
+    def __init__(self, _model: str, _langs: List[str]):
+        self.model = _model
+        self.langs = _langs
+        N = len(_langs)
+        self.sim_matrix = np.zeros(shape=[N, N])
+        self.norm_matrix = np.zeros(shape=[N, N])
+        
+    def compute_similarity_matrix(self, sim_func: str):
+        prev_combos = []
+        # compare each language with every other language
+        for i in range(len(self.langs)):
+            for j in range(len(self.langs)):
+                # compute duo similarity if 
+                # - both languages are not equal
+                # - language pair has not already been calculated
+                if self.langs[i] != self.langs[j] and [self.langs[i], self.langs[j]] not in prev_combos:
+                    words0 = utils.get_swadesh_words(self.langs[i])
+                    words1 = utils.get_swadesh_words(self.langs[j])
+                    d_sim = duo_sim(self.model, self.langs[i], self.langs[j], words0, words1)
+                    similarity = d_sim.compute_similarity(sim_func, True)
+                    self.sim_matrix[i, j] = similarity
+                    self.sim_matrix[j, i] = similarity
+                    print ('similarity between \'%s\' and \'%s\' is %f.' % (self.langs[i], self.langs[j], similarity))
+                    prev_combos.append([self.langs[i], self.langs[j]])
+                    prev_combos.append([self.langs[j], self.langs[i]])
+                # set value in matrix to 1 if same languages
+                elif self.langs[i] == self.langs[j]:
+                    self.sim_matrix[i, j] = 1
+                    
+        # normalize similarity matrix
+        self.norm_matrix = mono_sim.normalize_results(self.sim_matrix)
+        # reshape
+        self.sim_matrix = np.reshape(a=self.sim_matrix, newshape=[len(self.langs), len(self.langs)])
+        self.norm_matrix = np.reshape(a=self.norm_matrix, newshape=[len(self.langs), len(self.langs)])
+        
+        # mask bottom triangle
+        mask = np.zeros_like(self.norm_matrix, dtype=np.bool)
+        mask[np.triu_indices_from(mask)] = True
+        masked_sim_matrix = np.where(mask, self.norm_matrix, 0)
+             
+        # create plot
+        # Labels
+        xlabs = self.langs
+        ylabs = self.langs 
+        # Heat map
+        fig, ax = plt.subplots()
+        im = ax.imshow(masked_sim_matrix, cmap='gist_heat')
+        # Add the labels
+        ax.xaxis.set_ticks_position('top')
+        ax.yaxis.set_ticks_position('right')
+        ax.set_xticks(np.arange(len(xlabs)), labels=xlabs)
+        ax.set_yticks(np.arange(len(ylabs)), labels=ylabs)
+        # add color bar
+        cbaxes = fig.add_axes([0.1, 0.1, 0.03, 0.8])  # This is the position for the colorbar
+        cbar = ax.figure.colorbar(im, cax=cbaxes)
+        cbar.ax.set_ylabel('', rotation=-90, va='bottom')
+        ax.yaxis.set_label_position('left')
+        # Add the values to each cell
+        
+        for i in range(len(xlabs)):
+            for j in range(len(ylabs)):
+                if (self.norm_matrix[i, j] > 0.0):
+                    text_color = ''
+                    if self.norm_matrix[i, j] < 0.5: text_color='white'
+                    else: text_color='black'
+                    text = ax.text(j, i, round(self.sim_matrix[i, j], 3), ha="center", va="center", color=text_color)
+        # rotate y-axis labels
+        plt.setp(ax.get_xticklabels(), rotation=-40, ha='right', rotation_mode='anchor')
+        plt.show()
+
 ''' used to compute similarity between two languages '''
 class duo_sim:
     def __init__(self, _model: str, _lang0: str, _lang1, _words0: List[str], _words1: List[str]):
-        
         assert len(_words0) == len(_words1)
         self.lang0 = _lang0
         self.lang1 = _lang1
@@ -18,8 +89,7 @@ class duo_sim:
         self.similarity = -1
         
     # computes the similarity of the two languages
-    def compute_similarity(self, sim_func):
-        
+    def compute_similarity(self, sim_func: str, normalize: bool):
         # determine valid similarity function
         if (sim_func != 'spearman' and 
             sim_func != 'cosine-dist'):
@@ -50,6 +120,8 @@ class duo_sim:
             #print ('word_sim: ', word_sim)
             sim_sum += word_sim
         self.similarity = sim_sum / len(self.words0)
+        # normalize bewteen 0 and 1
+        if normalize: self.similarity = utils.inverse_interpolation(-1.0, 1.0, self.similarity)
         return self.similarity
 
 ''' used to compute embedding and similarity vectors for one language '''
@@ -57,7 +129,6 @@ class mono_sim:
     def __init__(self, _model: str, _words: List[str], _lang: str):
         if _model == 'm2m': self.model = m2m100()
         elif _model == 'mbart':  self.model = mbart()
-        
         self.lang = self.model.get_language_id(_lang)
         self.words = _words
         self.vectors = []
@@ -72,7 +143,11 @@ class mono_sim:
             #print ('word: ', self.words[i], ', embed shape: ', res.shape)
             # sum vectors together into one [1024] vector
             res = res.sum(dim=0)
-            self.vectors.append(res.detach().numpy())
+            # normalize vector
+            res = res.detach().numpy()
+            res = res / np.linalg.norm(res)
+            # add to vectors
+            self.vectors.append(res)
         return self.vectors
       
     def generate_similarity_vectors(self):
@@ -104,10 +179,8 @@ class mono_sim:
     def semantic_relation_matrix(self):
         # words -> vector embeddings
         self.vectors = self.create_vector_embeddings()
-        
         # vector embeddings -> similarity vectors
         self.sim_vectors = self.generate_similarity_vectors()
-            
         # create 2D matrix and mask 
         sim_array = mono_sim.normalize_results(self.sim_vectors)
         sim_matrix = np.reshape(a=sim_array, newshape=[len(self.words), len(self.words)])

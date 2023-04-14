@@ -3,6 +3,7 @@
 # python run.py --model m2m --task mono-sim --words small --l0 english
 # python run.py --model m2m --task duo-sim --words small --l0 french --l1 spanish
 # python run.py --model m2m --task duo-sim --words pereira --l0 japanese --l1 korean
+# python run.py --model m2m --task multi-sim --langs portuguese,spanish,french,german,finnish
 
 ''' 4/13/2023 examples with duo-sim '''
 # C:\Users\Marco\Documents\GitHub\NLP_Spring2023\Final Project>python run.py --model m2m --task duo-sim --l0 english --l1 french

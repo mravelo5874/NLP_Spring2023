@@ -5,7 +5,6 @@ from numpy.linalg import norm
 from pandas import DataFrame as df
 from scipy.spatial import distance
 from typing import List
-from swadesh_words import english, finnish, french, german, japanese, portuguese, spanish, ukrainian
 
 def inverse_interpolation(p0, p1, val):
     # clamp value to range if outside
@@ -38,20 +37,6 @@ def read_list(file_name):
         n_list = json.load(fp)
         print ('loaded from list file: ', file_name)
         return n_list
-    
-def get_swadesh_words(lang: str):
-    print ('getting swadesh words for: ', lang)
-    if      lang == 'english':      return english.eng_110
-    elif    lang == 'finnish':      return finnish.fin_110
-    elif    lang == 'french':       return french.fra_110
-    elif    lang == 'german':       return german.deu_110
-    elif    lang == 'japanese':     return japanese.jpn_110
-    elif    lang == 'portuguese':   return portuguese.por_110
-    elif    lang == 'spanish':      return spanish.spa_110
-    elif    lang == 'ukrainian':    return ukrainian.ukr_100
-    else:
-        print ('Could not find swadesh words for \'%s\'. Translating the english word list instead.' % lang)
-        return translate_english_words(english.eng_110, 'm2m', lang, 'swadesh-temp')
 
 ''' translates an english list into target language '''
 def translate_english_words(_words: List[str], _model, _tgt_lang: str, _words_type: str):

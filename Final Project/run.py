@@ -3,14 +3,16 @@ import utils
 import time
 from dataclasses import dataclass, field
 from multi_lingual_models import m2m100, mbart, mt0
-from similarity import mono_sim, duo_sim
+from similarity import mono_sim, duo_sim, multi_sim
+from swadesh_words import english
 from typing import List
 
 ''' word lists '''
 english_words_small = ['small', 'short', 'child', 'wife', 'mother', 'construction', 'capitalism', 'capitalist', 'communism', 'father']
 spanish_words_small = ['pequeño', 'corto', 'niño', 'esposa', 'madre', 'construcción', 'capitalismo', 'capitalista', 'comunismo', 'padre']
 chinese_words_small = ['小', '短', '儿童', '妻子', '母亲', '建筑工程', '资本主义', '资本家', '共产主义', '父亲']
-
+swadesh_yakhontov_english = [ 'I', 'you', 'this', 'who', 'what', 'one', 'two', 'fish', 'dog', 'louse', 'blood', 'bone', 'egg', 'horn', 'tail', 'ear', 'eye', 'nose', 
+                             'tooth', 'tongue', 'hand', 'know', 'die', 'give', 'sun', 'moon', 'water', 'salt', 'stone', 'wind', 'fire', 'year', 'full', 'new', 'name']
 # from https://www.nature.com/articles/s41467-018-03068-4
 pereira_words_english = ['ability', 'accomplished', 'angry', 'apartment', 'applause', 'argument', 'argumentatively', 'art', 'attitude', 'bag', 'ball', 'bar', 
                          'bear', 'beat', 'bed', 'beer', 'big', 'bird', 'blood', 'body', 'brain', 'broken', 'building', 'burn', 'business', 'camera', 'carefully', 
@@ -27,17 +29,17 @@ pereira_words_english = ['ability', 'accomplished', 'angry', 'apartment', 'appla
                          'stupid', 'successful', 'sugar', 'suspect', 'table', 'taste', 'team', 'texture', 'time', 'tool', 'toy', 'tree', 'trial', 'tried', 'typical', 
                          'unaware', 'usable', 'useless', 'vacation', 'war', 'wash', 'weak', 'wear', 'weather', 'willingly', 'word']
 
-swadesh_yakhontov_english = [ 'I', 'you', 'this', 'who', 'what', 'one', 'two', 'fish', 'dog', 'louse', 'blood', 'bone', 'egg', 'horn', 'tail', 'ear', 'eye', 'nose', 
-                             'tooth', 'tongue', 'hand', 'know', 'die', 'give', 'sun', 'moon', 'water', 'salt', 'stone', 'wind', 'fire', 'year', 'full', 'new', 'name']
 
+''' argument parsing stuff '''
 @dataclass
 class IN_ARGS():
-    model: str
-    task: str
+    model: str = 'm2m'
+    task: str = 'example'
     words: str = 'swadesh_110'
     l0: str = 'english'
     l1: str = 'spanish'
     sim_func: str = 'spearman'
+    langs: str = 'english spanish french'
 
 @dataclass
 class OUT_ARGS():
@@ -49,8 +51,9 @@ def get_args():
     parser = trans.HfArgumentParser([IN_ARGS, OUT_ARGS])
     in_args, out_args, unknown_args = parser.parse_args_into_dataclasses(return_remaining_strings=True)
     # show a warning on unknown arguments
-    if len(unknown_args) > 0: print('[warning] unknown args found: ', unknown_args)
+    if len(unknown_args) > 0: print('[WARNING] Unknown args found: ', unknown_args)
     return in_args, out_args
+    
     
 def main():
     in_args, out_args = get_args()
@@ -61,7 +64,7 @@ def main():
     elif in_args.task == 'example' and in_args.model == 'mt0': mt0_example_translate()
     
     
-    ''' similarity matrix generation '''
+    ''' similarity matrix generation for single language '''
     if in_args.task == 'mono-sim' and in_args.model != '' and in_args.words != '' and in_args.l0 != '': 
         # get word list
         word_list = None
@@ -70,14 +73,16 @@ def main():
             word_list = english_words_small
         elif in_args.words == 'pereira':
             word_list = pereira_words_english
-        elif in_args.words == 'swadesh_110':
+        elif in_args.words == 'swadesh-110':
             use_words = utils.get_swadesh_words(in_args.l0)
+        elif in_args.words == 'swadesh-207' and in_args.l0 == 'english':
+            use_words = english.eng_207
         # translate word list
         print ('Gathering word list for mono-sim calculation...')
-        if in_args.model == 'm2m' and in_args.words != 'swadesh_110':
+        if in_args.model == 'm2m' and use_words == None:
             model = m2m100()
             use_words = utils.translate_english_words(word_list, model, in_args.l0, in_args.words)
-        elif in_args.model == 'mbart' and in_args.words != 'swadesh_110':
+        elif in_args.model == 'mbart' and use_words == None:
             model = mbart()
             use_words = utils.translate_english_words(word_list, model, in_args.l0, in_args.words)
         assert use_words != None  
@@ -85,7 +90,7 @@ def main():
         mono_similarity(in_args.model, in_args.l0, use_words)
 
         
-    ''' similarity between languages '''
+    ''' similarity between two languages '''
     if in_args.task == 'duo-sim' and in_args.model != '' and in_args.words != '' and in_args.l0 != '' and in_args.l1 != '':
         # get word list
         word_list = None
@@ -95,7 +100,7 @@ def main():
             word_list = english_words_small
         elif in_args.words == 'pereira':
             word_list = pereira_words_english
-        elif in_args.words == 'swadesh_110':
+        elif in_args.words == 'swadesh-110':
             words0 = utils.get_swadesh_words(in_args.l0)
             words1 = utils.get_swadesh_words(in_args.l1)
         # get list of translated words
@@ -115,12 +120,24 @@ def main():
         duo_similarity(in_args.model, in_args.l0, in_args.l1, words0, words1, in_args.sim_func)
 
 
+    ''' similarity between multiple languages '''
+    if in_args.task == 'multi-sim' and in_args.model != '' and in_args.langs != []:
+        # split langs
+        langs_list = in_args.langs.split(',')
+        assert len(langs_list) > 1
+        # validate langs
+        multi_similarity(in_args.model, langs_list, in_args.sim_func)
+    
+def multi_similarity(_model: str, _langs: List[str], _sim_func: str):
+    print ('Computing similarity matrix between languages: %s with model \'%s\'. This may take some time...' % (_langs, _model))
+    m_sim = multi_sim(_model, _langs)
+    m_sim.compute_similarity_matrix(_sim_func)
+
 def duo_similarity(_model: str, _lang_0: str, _lang_1: str, _words0: List[str], _words1: List[str], _sim_func: str):
     print ('Computing similarity between languages: \'%s\' and \'%s\'. This may take some time...' % (_lang_0, _lang_1))
     d_sim = duo_sim(_model, _lang_0, _lang_1, _words0, _words1)
-    res = d_sim.compute_similarity(_sim_func)
-    norm_res = utils.inverse_interpolation(-1.0, 1.0, res)
-    print ('The similarity between \'%s\' and \'%s\' using \'%s\' is: %f (between -1 and 1) := %f (between 0 and 1).' % (_lang_0, _lang_1, _model, res, norm_res))
+    res = d_sim.compute_similarity(_sim_func, True)
+    print ('The similarity between \'%s\' and \'%s\' using \'%s\' is: %f (between 0 and 1).' % (_lang_0, _lang_1, _model, res))
 
 def mono_similarity(_model: str, _lang: str, _words: List[str]):
     print ('Computing mono-similarity using \'%s\' with \'%s\'. This may take some time...' % (_model, _lang))
@@ -264,10 +281,18 @@ def mt0_example_translate():
     print ('chinese trans: ', out_zh)
     print ('back 2 english: ', out_zh_en)
     print ('')
-  
+
+# yoinked from: https://stackoverflow.com/questions/775049/how-do-i-convert-seconds-to-hours-minutes-and-seconds
+def sec_to_hours(seconds):
+    a=str(seconds//3600)
+    b=str((seconds%3600)//60)
+    c=str((seconds%3600)%60)
+    d=["{} hours {} mins {} seconds".format(a, b, c)]
+    return d
+
 if __name__ == "__main__":
     start_time = time.perf_counter()
     main()
     end_time = time.perf_counter()
     elapsed_time = end_time - start_time
-    print("elapsed time: ", round(elapsed_time, 2))
+    print("elapsed time: ", sec_to_hours(elapsed_time)[0])

@@ -45,7 +45,7 @@ fra_110 = [
 'genou',
 'savoir',
 'feuille',
-'se coucher',
+'s\'allonger',
 'foie',
 'long',
 'pou',

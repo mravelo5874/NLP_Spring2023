@@ -45,7 +45,7 @@ fin_110 = [
 'polvi',
 'tietää',
 'lehti',
-'lewætæ',
+'maata',
 'maksa',
 'pitkä',
 'täi',

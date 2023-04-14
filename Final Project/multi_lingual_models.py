@@ -21,7 +21,7 @@ class m2m100(_model_):
     def set_gpu(self):
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.model.to(self.device)
-        print ('device set to: ', self.device)
+        #print ('device set to: ', self.device)
     
     def translate(self, src: str, _src_lang: str, _tgt_lang: str):
         # return src if no translation is needed
@@ -55,7 +55,7 @@ class mbart(_model_):
     def set_gpu(self):
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.model.to(self.device)
-        print ('device set to: ', self.device)
+        #print ('device set to: ', self.device)
         
     def translate(self, src: str, _src_lang: str, _tgt_lang: str):
         # return src if no translation is needed
