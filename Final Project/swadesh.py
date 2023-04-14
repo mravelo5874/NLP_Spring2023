@@ -4,30 +4,31 @@ from swadesh_words import afrikaans, amharic, arabic, asturian, azerbaijani, bas
 from swadesh_words import bosnian, catalan, cebuano, czech, welsh, danish, german, greek, english, spanish
 # 21 --- 30
 
-''' language with swadesh word list '''
+
+''' languages with swadesh word lists '''
 valid_languages = [
 # 1 --- 10
-'afrikaans',    'afr',      'af',
-'amharic',      'amh',      'am',
-'arabic',       'ara',      'ar',
-'asturian',     'ast',      'as',
-'azerbaijani',  'aze',      'az',
-'bashkir',      'bas',      'ba',
-'belarusian',   'bel',      'be',
-'bulgarian',    'bul',      'bu',
-'bengali',      'ben',      'bn',
-'breton',       'bre',      'br',
+'afrikaans',    'afr', 'af',
+'amharic',      'amh', 'am',
+'arabic',       'ara', 'ar',
+'asturian',     'ast', 'as',
+'azerbaijani',  'aze', 'az',
+'bashkir',      'bas', 'ba',
+'belarusian',   'bel', 'be',
+'bulgarian',    'bul', 'bu',
+'bengali',      'ben', 'bn',
+'breton',       'bre', 'br',
 # 11 --- 20
-'bosnian',      'bos',      'bs',
-'catalan',      'cat',      'ca',
-'cebuano',      'ceb',      'cb',
-'czech',        'cze',      'cs',
-'welsh',        'wel',      'cy',
-'danish',       'dan',      'da',
-'german',       'ger',      'de',
-'greek',        'gre',      'el',
-'english',      'eng',      'en',
-'spanish',      'spa',      'es',
+'bosnian',      'bos', 'bs',
+'catalan',      'cat', 'ca',
+'cebuano',      'ceb', 'cb',
+'czech',        'cze', 'cs',
+'welsh',        'wel', 'cy',
+'danish',       'dan', 'da',
+'german',       'ger', 'de',
+'greek',        'gre', 'el',
+'english',      'eng', 'en',
+'spanish',      'spa', 'es',
 # 21 --- 30
 
 ]
@@ -36,6 +37,7 @@ from swadesh_words import finnish, french, german, japanese, portuguese, spanish
 def get_swadesh_words(lang: str, version: str):
     assert lang in valid_languages
     
+    # only 8 languages available for swadesh-110
     if version == 'swadesh-110':
         if      lang=='english'         or lang=='eng' or lang=='en': return english.eng_110
         elif    lang=='finnish'         or lang=='eng' or lang=='en': return finnish.fin_110

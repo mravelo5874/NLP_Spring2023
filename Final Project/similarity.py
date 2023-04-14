@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import utils
+import swadesh
 from typing import List
 from multi_lingual_models import m2m100, mbart
 
@@ -23,8 +24,8 @@ class multi_sim:
                 # - both languages are not equal
                 # - language pair has not already been calculated
                 if self.langs[i] != self.langs[j] and [self.langs[i], self.langs[j]] not in prev_combos:
-                    words0 = utils.get_swadesh_words(self.langs[i])
-                    words1 = utils.get_swadesh_words(self.langs[j])
+                    words0 = swadesh.get_swadesh_words(self.langs[i], 'swadesh-207')
+                    words1 = swadesh.get_swadesh_words(self.langs[j], 'swadesh-207')
                     d_sim = duo_sim(self.model, self.langs[i], self.langs[j], words0, words1)
                     similarity = d_sim.compute_similarity(sim_func, True)
                     self.sim_matrix[i, j] = similarity
@@ -97,8 +98,8 @@ class duo_sim:
             return -1
         
         # compute vector embeddingds and similarity vectors
-        mono_0 = mono_sim(self.model, self.words0, self.lang0)
-        mono_1 = mono_sim(self.model, self.words1, self.lang1)
+        mono_0 = mono_sim(self.model, self.words0, None, self.lang0)
+        mono_1 = mono_sim(self.model, self.words1, None, self.lang1)
         mono_0.create_vector_embeddings()
         mono_1.create_vector_embeddings()
         vecs_0 = mono_0.generate_similarity_vectors()
@@ -126,11 +127,12 @@ class duo_sim:
 
 ''' used to compute embedding and similarity vectors for one language '''
 class mono_sim:
-    def __init__(self, _model: str, _words: List[str], _lang: str):
+    def __init__(self, _model: str, _words: List[str], _eng_words: List[str], _lang: str):
         if _model == 'm2m': self.model = m2m100()
         elif _model == 'mbart':  self.model = mbart()
         self.lang = self.model.get_language_id(_lang)
         self.words = _words
+        self.eng_words = _eng_words
         self.vectors = []
         self.sim_vectors = []
         
@@ -190,8 +192,10 @@ class mono_sim:
         
         # create plot
         # Labels
-        xlabs = self.words
-        ylabs = self.words 
+        labels = []
+        for i in range(len(self.words)): labels.append(self.words[i] + '(' + self.eng_words[i] + ')')
+        xlabs = labels
+        ylabs = labels
         # Heat map
         fig, ax = plt.subplots()
         im = ax.imshow(sim_matrix, cmap='gist_heat')

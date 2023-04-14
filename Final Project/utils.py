@@ -62,26 +62,29 @@ def translate_english_words(_words: List[str], _model, _tgt_lang: str, _words_ty
     return trans_list
 
 m2m_abbr = {    
-    'afrikaans':        'af', 
-    'amharic':          'am', 
-    'arabic':           'ar', 
-    'asturian':         'as', 
-    'azerbaijani':      'az', 
-    'bashkir':          'ba', 
-    'belarusian':       'be', 
-    'bulgarian':        'bg', 
-    'bengali':          'bn', 
-    'breton':           'br', 
-    'bosnian':          'bs', 
-    'catalan':          'ca',   # Valencian
-    'cebuano':          'ce', 
-    'czech':            'cs', 
-    'welsh':            'cy', 
-    'danish':           'da', 
-    'german':           'de',
-    'greek':            'el', 
-    'english':          'en', 
-    'spanish':          'es', 
+    # 1 --- 10
+    'afrikaans':        'af',   'afr': 'af',   'af': 'af',
+    'amharic':          'am',   'amh': 'am',   'am': 'am',
+    'arabic':           'ar',   'ara': 'ar',   'ar': 'ar',
+    'asturian':         'ast',  'ast': 'ast',  'as': 'ast',
+    'azerbaijani':      'az',   'aze': 'az',   'az': 'az',
+    'bashkir':          'ba',   'bas': 'ba',   'ba': 'ba',
+    'belarusian':       'be',   'bel': 'be',   'be': 'be',
+    'bulgarian':        'bg',   'bul': 'bg',   'bg': 'bg',
+    'bengali':          'bn',   'ben': 'bn',   'bn': 'bn',
+    'breton':           'br',   'bre': 'br',   'br': 'br',
+    # 11 --- 20
+    'bosnian':          'bs',   'bos': 'bs',   'bs': 'bs',
+    'catalan':          'ca',   'cat': 'ca',   'ca': 'ca',
+    'cebuano':          'ce',   'ceb': 'ceb',  'cb': 'ceb',
+    'czech':            'cs',   'cze': 'cy',   'cy': 'cy',
+    'welsh':            'cy',   'wel': 'br',   'br': 'br',
+    'danish':           'da',   'dan': 'da',   'da': 'da',
+    'german':           'de',   'ger': 'de',   'de': 'de',
+    'greek':            'el',   'gre': 'el',   'el': 'el',
+    'english':          'en',   'eng': 'en',   'en': 'en',
+    'spanish':          'es',   'spa': 'es',   'es': 'es',
+    # 21 --- 30
     'estonian':         'et', 
     'persian':          'fa', 
     'fulah':            'ff', 
@@ -159,7 +162,7 @@ m2m_abbr = {
     'wolof':            'wo', 
     'xhosa':            'xh', 
     'yiddish':          'yi', 
-    'yoruba':            'yo', 
+    'yoruba':           'yo', 
     'chinese':          'zh', 
     'zulu':             'zu'
 }
