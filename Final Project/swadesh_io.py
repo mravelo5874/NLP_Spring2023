@@ -1,9 +1,8 @@
 # 1 --- 10
 from swadesh_words import afrikaans, amharic, arabic, asturian, azerbaijani, bashkir, belarusian, bulgarian, bengali, breton
 # 11 --- 20
-
-
-from swadesh_words import english, finnish, french, german, japanese, portuguese, spanish, ukrainian
+from swadesh_words import bosnian, catalan, cebuano, czech, welsh, danish, german, greek, english, spanish
+# 21 --- 30
 
 ''' language with swadesh word list '''
 valid_languages = [
@@ -19,9 +18,21 @@ valid_languages = [
 'bengali',      'ben',      'bn',
 'breton',       'bre',      'br',
 # 11 --- 20
+'bosnian',      'bos',      'bs',
+'catalan',      'cat',      'ca',
+'cebuano',      'ceb',      'cb',
+'czech',        'cze',      'cs',
+'welsh',        'wel',      'cy',
+'danish',       'dan',      'da',
+'german',       'ger',      'de',
+'greek',        'gre',      'el',
+'english',      'eng',      'en',
+'spanish',      'spa',      'es',
+# 21 --- 30
 
 ]
 
+from swadesh_words import finnish, french, german, japanese, portuguese, spanish, ukrainian
 def get_swadesh_words(lang: str, version: str):
     assert lang in valid_languages
     
@@ -49,8 +60,17 @@ def get_swadesh_words(lang: str, version: str):
         elif lang=='bengali'            or lang=='ben' or lang=='bn': return bengali.ben_207
         elif lang=='breton'             or lang=='bre' or lang=='br': return breton.bre_207
         # 11 --- 20
-        
-        
+        # TODO generate swadesh list -> elif lang=='bosnian'            or lang=='bos' or lang=='bs': return bosnian.bos_207
+        elif lang=='catalan'            or lang=='cat' or lang=='ca': return catalan.cat_207
+        elif lang=='cebuano'            or lang=='ceb' or lang=='cb': return cebuano.ceb_207
+        elif lang=='czech'              or lang=='cze' or lang=='cs': return czech.cze_207
+        elif lang=='welsh'              or lang=='wel' or lang=='cy': return welsh.wel_207
+        elif lang=='danish'             or lang=='dan' or lang=='da': return danish.dan_207
+        elif lang=='german'             or lang=='gar' or lang=='de': return german.deu_207
+        elif lang=='greek'              or lang=='gre' or lang=='el': return greek.gre_207
+        elif lang=='english'            or lang=='eng' or lang=='en': return english.eng_207
+        elif lang=='spanish'            or lang=='spa' or lang=='es': return spanish.spa_207
+        # 21 --- 30
        
         else:
             print ('[ERROR]: Could not find swadesh-207 list for \'%s\'.' % lang)
