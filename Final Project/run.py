@@ -81,7 +81,7 @@ def main():
             model = mbart()
             use_words = utils.translate_english_words(word_list, model, in_args.l0, in_args.words)
         assert use_words != None  
-        print (in_args.l0, 'words:', use_words)
+        # print (in_args.l0, 'words:', use_words)
         mono_similarity(in_args.model, in_args.l0, use_words)
 
         
@@ -110,8 +110,8 @@ def main():
             words1 = utils.translate_english_words(word_list, model, in_args.l1, in_args.words)
         assert words0 != None  
         assert words1 != None  
-        print (in_args.l0, 'words:', words0)
-        print (in_args.l1, 'words:', words1)
+        # print (in_args.l0, 'words:', words0)
+        # print (in_args.l1, 'words:', words1)
         duo_similarity(in_args.model, in_args.l0, in_args.l1, words0, words1, in_args.sim_func)
 
 
