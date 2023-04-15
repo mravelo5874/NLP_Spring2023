@@ -5,9 +5,19 @@ from swadesh_words import bosnian, catalan, cebuano, czech, welsh, danish, germa
 # 21 --- 30
 from swadesh_words import estonian, persian, fulah, finnish, french, frisian, irish, gaelic, galician, gujarati
 # 31 --- 40
-from swadesh_words import hausa, hebrew, hindi, croatian, haitian, hungarian, armenian
+from swadesh_words import hausa, hebrew, hindi, croatian, haitian, hungarian, armenian, indonesian, igbo, iloko
+# 41 --- 50
+from swadesh_words import icelandic, italian, japanese, javanese, georgian, kazakh, khmer, kannada, korean, luxembourgish
+# 51 --- 60
 
 
+''' all inclusive list '''
+all_langs = ['afrikaans','amharic','arabic','asturian','azerbaijani','bashkir','belarusian','bulgarian','bengali','breton',
+            'bosnian','catalan','cebuano','czech','welsh','danish','german','greek','english','spanish','estonian','persian',
+            'fulah','finnish','french','frisian','irish','gaelic','galician','gujarati','hausa','hebrew','hindi','croatian',
+            'haitian','hungarian','armenian','indonesian','igbo','iloko','icelandic','italian','japanese','javanese','georgian',
+            'kazakh','khmer','kannada','korean','luxembourgish']
+not_implemented_langs = ['bosnian','fulah','igbo','kazakh','luxembourgish']
 
 ''' languages with swadesh word lists '''
 valid_languages = [
@@ -52,11 +62,24 @@ valid_languages = [
 'haitian',      'hai', 'ht',
 'hungarian',    'hun', 'hu',
 'armenian',     'arm', 'hy',
-
-
+'indonesian',   'ind', 'id',
+'igbo',         'igb', 'ig',
+'iloko',        'ilo', 'il',
+# 41 --- 50
+'icelandic',    'ice', 'is',
+'italian',      'ita', 'it',
+'japanese',     'jap', 'ja',
+'javanese',     'jav', 'jv',
+'georgian',     'geo', 'ka',
+'kazakh',       'kaz', 'kk',
+'khmer',        'khm', 'km',
+'kannada',      'kan', 'kn',
+'korean',       'kor', 'ko',
+'luxembourgish','lux', 'lb',
+# 51 --- 60
 ]
 
-from swadesh_words import german, japanese, portuguese, spanish, ukrainian
+from swadesh_words import german, portuguese, spanish, ukrainian
 def get_swadesh_words(lang: str, version: str):
     assert lang in valid_languages
     
@@ -114,6 +137,21 @@ def get_swadesh_words(lang: str, version: str):
         elif lang=='haitian'            or lang=='hai' or lang=='ht': return haitian.hai_207
         elif lang=='hungarian'          or lang=='hun' or lang=='hu': return hungarian.hun_207
         elif lang=='armenian'           or lang=='arm' or lang=='hy': return armenian.arm_207
+        elif lang=='indonesian'         or lang=='ind' or lang=='id': return indonesian.ind_207
+        # TODO generate swadesh list -> elif lang=='igbo'            or lang=='igb' or lang=='ig': return igbo.igb_207
+        elif lang=='iloko'              or lang=='ilo' or lang=='il': return iloko.ilo_207
+        # 41 --- 50
+        elif lang=='icelandic'          or lang=='ice' or lang=='is': return icelandic.ice_207
+        elif lang=='italian'            or lang=='ita' or lang=='it': return italian.ita_207
+        elif lang=='japanese'           or lang=='jap' or lang=='ja': return japanese.jpn_207
+        elif lang=='javanese'           or lang=='jav' or lang=='jv': return javanese.jav_207
+        elif lang=='georgian'           or lang=='geo' or lang=='ka': return georgian.geo_207
+        # TODO generate swadesh list -> elif lang=='kazakh'            or lang=='kaz' or lang=='aa': return kazakh.kaz_207
+        elif lang=='khmer'              or lang=='khm' or lang=='kk': return khmer.khm_207
+        elif lang=='kannada'            or lang=='kan' or lang=='kn': return kannada.kan_207
+        elif lang=='korean'             or lang=='kor' or lang=='ko': return korean.kor_207
+        # TODO generate swadesh list -> elif lang=='luxembourgish'            or lang=='lux' or lang=='lb': return luxembourgish.lux_207
+        # 51 --- 60
         
         
         else: print ('[ERROR]: Could not find swadesh-207 list for \'%s\'.' % lang)
