@@ -3,6 +3,10 @@ from swadesh_words import afrikaans, amharic, arabic, asturian, azerbaijani, bas
 # 11 --- 20
 from swadesh_words import bosnian, catalan, cebuano, czech, welsh, danish, german, greek, english, spanish
 # 21 --- 30
+from swadesh_words import estonian, persian, fulah, finnish, french, frisian, irish, gaelic, galician, gujarati
+# 31 --- 40
+from swadesh_words import hausa, hebrew, hindi, croatian, haitian, hungarian, armenian
+
 
 
 ''' languages with swadesh word lists '''
@@ -30,10 +34,29 @@ valid_languages = [
 'english',      'eng', 'en',
 'spanish',      'spa', 'es',
 # 21 --- 30
+'estonian',     'est', 'et',
+'persian',      'per', 'fa',
+'fulah',        'ful', 'ff',
+'finnish',      'fin', 'fi',
+'french',       'fre', 'fr',
+'frisian',      'fri', 'fy',
+'irish',        'iri', 'ga',
+'gaelic',       'gae', 'gd',
+'galician',     'gal', 'gl',
+'gujarati',     'guj', 'gu',
+# 31 --- 40
+'hausa',        'hau', 'ha',
+'hebrew',       'heb', 'he',
+'hindi',        'hin', 'hi',
+'croatian',     'cro', 'hr',
+'haitian',      'hai', 'ht',
+'hungarian',    'hun', 'hu',
+'armenian',     'arm', 'hy',
+
 
 ]
 
-from swadesh_words import finnish, french, german, japanese, portuguese, spanish, ukrainian
+from swadesh_words import german, japanese, portuguese, spanish, ukrainian
 def get_swadesh_words(lang: str, version: str):
     assert lang in valid_languages
     
@@ -73,6 +96,24 @@ def get_swadesh_words(lang: str, version: str):
         elif lang=='english'            or lang=='eng' or lang=='en': return english.eng_207
         elif lang=='spanish'            or lang=='spa' or lang=='es': return spanish.spa_207
         # 21 --- 30
-       
-        else:
-            print ('[ERROR]: Could not find swadesh-207 list for \'%s\'.' % lang)
+        elif lang=='estonian'           or lang=='est' or lang=='et': return estonian.est_207
+        elif lang=='persian'            or lang=='per' or lang=='fa': return persian.per_207
+        # TODO generate swadesh list -> elif lang=='fulah'            or lang=='ful' or lang=='ff': return fulah.ful_207
+        elif lang=='finnish'            or lang=='fin' or lang=='fi': return finnish.fin_207
+        elif lang=='french'             or lang=='fre' or lang=='fr': return french.fre_207
+        elif lang=='frisian'            or lang=='fri' or lang=='fy': return frisian.fri_207
+        elif lang=='irish'              or lang=='iri' or lang=='ga': return irish.iri_207
+        elif lang=='gaelic'             or lang=='gae' or lang=='gd': return gaelic.gae_207
+        elif lang=='galician'           or lang=='gal' or lang=='gl': return galician.gal_207
+        elif lang=='gujarati'           or lang=='guj' or lang=='gu': return gujarati.guj_207
+        # 31 --- 40
+        elif lang=='hausa'              or lang=='hau' or lang=='ha': return hausa.hau_207
+        elif lang=='hebrew'             or lang=='heb' or lang=='he': return hebrew.heb_207
+        elif lang=='hindi'              or lang=='hin' or lang=='hi': return hindi.hin_207
+        elif lang=='croatian'           or lang=='cro' or lang=='hr': return croatian.cro_207
+        elif lang=='haitian'            or lang=='hai' or lang=='ht': return haitian.hai_207
+        elif lang=='hungarian'          or lang=='hun' or lang=='hu': return hungarian.hun_207
+        elif lang=='armenian'           or lang=='arm' or lang=='hy': return armenian.arm_207
+        
+        
+        else: print ('[ERROR]: Could not find swadesh-207 list for \'%s\'.' % lang)
