@@ -19,6 +19,13 @@ all_langs = ['afrikaans','amharic','arabic','asturian','azerbaijani','bashkir','
             'kazakh','khmer','kannada','korean','luxembourgish']
 not_implemented_langs = ['bosnian','fulah','igbo','kazakh','luxembourgish']
 
+def get_all_langs(): 
+    all = []
+    for i in range(len(all_langs)):
+        if all_langs[i] not in not_implemented_langs:
+            all.append(all_langs[i])
+    return all
+
 ''' languages with swadesh word lists '''
 valid_languages = [
 # 1 --- 10

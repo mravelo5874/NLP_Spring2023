@@ -129,8 +129,11 @@ def main():
 
     ''' similarity between multiple languages '''
     if in_args.task == 'multi-sim' and in_args.model != '' and in_args.langs != []:
-        # split langs
-        langs_list = in_args.langs.split(',')
+        langs_list = []
+        # get all valid langs
+        if in_args.langs == 'all': langs_list = swadesh.get_all_langs()
+        # split custom langs
+        else: langs_list = in_args.langs.split(',')
         assert len(langs_list) > 1
         # validate langs
         multi_similarity(in_args.model, langs_list, in_args.sim_func)
