@@ -37,7 +37,7 @@ class IN_ARGS():
     task: str = 'example'
     words: str = 'swadesh_110'
     sim_func: str = 'spearman'
-    langs: str = 'english spanish french'
+    langs: str = 'english,spanish,french'
 
 @dataclass
 class OUT_ARGS():

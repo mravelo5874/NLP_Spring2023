@@ -67,14 +67,15 @@ class multi_sim:
         cbar.ax.set_ylabel('', rotation=-90, va='bottom')
         ax.yaxis.set_label_position('left')
         # Add the values to each cell
-        
+        '''
         for i in range(len(xlabs)):
             for j in range(len(ylabs)):
                 if (mask[i, j] == True):
                     text_color = ''
                     if self.norm_matrix[i, j] <= 0.3: text_color='white'
                     else: text_color='black'
-                    text = ax.text(j, i, round(self.sim_matrix[i, j], 3), ha="center", va="center", color=text_color, size='xxx-small')
+                    text = ax.text(j, i, round(self.sim_matrix[i, j], 3), ha="center", va="center", color=text_color, size='xx-small')
+        '''
         # rotate y-axis labels
         plt.setp(ax.get_xticklabels(), rotation=-40, ha='right', rotation_mode='anchor')
         plt.rcParams.update({'font.size': 8})
