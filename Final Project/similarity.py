@@ -69,13 +69,14 @@ class multi_sim:
         
         for i in range(len(xlabs)):
             for j in range(len(ylabs)):
-                if (self.norm_matrix[i, j] > 0.0):
+                if (mask[i, j] == True):
                     text_color = ''
-                    if self.norm_matrix[i, j] < 0.5: text_color='white'
+                    if self.norm_matrix[i, j] <= 0.3: text_color='white'
                     else: text_color='black'
-                    text = ax.text(j, i, round(self.sim_matrix[i, j], 3), ha="center", va="center", color=text_color)
+                    text = ax.text(j, i, round(self.sim_matrix[i, j], 3), ha="center", va="center", color=text_color, size='x-small')
         # rotate y-axis labels
         plt.setp(ax.get_xticklabels(), rotation=-40, ha='right', rotation_mode='anchor')
+        plt.rcParams.update({'font.size': 8})
         plt.show()
 
 ''' used to compute similarity between two languages '''
