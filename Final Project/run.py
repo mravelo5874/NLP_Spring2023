@@ -3,7 +3,7 @@ import swadesh
 import utils
 import time
 from dataclasses import dataclass, field
-from multi_lingual_models import m2m100, mbart, mt0
+from multi_lingual_models import m2m100, mbart, mt0, _multi_lang_model_
 from similarity import mono_sim, duo_sim, multi_sim
 from typing import List
 
@@ -36,8 +36,6 @@ class IN_ARGS():
     model: str = 'm2m'
     task: str = 'example'
     words: str = 'swadesh_110'
-    l0: str = 'english'
-    l1: str = 'spanish'
     sim_func: str = 'spearman'
     langs: str = 'english spanish french'
 
@@ -58,99 +56,110 @@ def get_args():
 def main():
     in_args, out_args = get_args()
     
-    ''' example translations '''
+    ''' example demos '''
     if in_args.task == 'example' and in_args.model == 'm2m': m2m_example_translate()
     elif in_args.task == 'example' and in_args.model == 'mbart': mbart_example_translate()
     elif in_args.task == 'example' and in_args.model == 'mt0': mt0_example_translate()
     
     
-    ''' similarity matrix generation for single language '''
-    if in_args.task == 'mono-sim' and in_args.model != '' and in_args.words != '' and in_args.l0 != '': 
+    ''' get model '''
+    model = None
+    if in_args.model == 'm2m': model = m2m100()
+    elif in_args.model == 'mbart': model = mbart()
+    else: 
+        print ('[ERROR]: Model \'%s\' is not valid.' % in_args.model)
+        return
+    
+    
+    ''' get languages '''
+    langs_list = []
+    # get all valid langs
+    if in_args.langs == 'all': langs_list = swadesh.get_all_langs()
+    # split custom langs
+    else: langs_list = in_args.langs.split(',')
+    if len(langs_list) <= 0:
+        print ('[ERROR]: No languages found in input.')
+        return
+    
+    
+    ''' similarity matrix generation for a single language '''
+    if in_args.task == 'mono-sim' and in_args.words != '': 
         # get word list
         eng_words = None
         use_words = None
+        print ('Gathering word list for mono-sim calculation...')
         if in_args.words == 'small':
             eng_words = english_words_small
         elif in_args.words == 'pereira':
             eng_words = pereira_words_english
         elif in_args.words == 'swadesh-110':
             eng_words = swadesh.get_swadesh_words('english', 'swadesh-110')
-            use_words = swadesh.get_swadesh_words(in_args.l0, 'swadesh-110')
+            use_words = swadesh.get_swadesh_words(langs_list[0], 'swadesh-110')
         elif in_args.words == 'swadesh-207':
             eng_words = swadesh.get_swadesh_words('english', 'swadesh-207')
-            use_words = swadesh.get_swadesh_words(in_args.l0, 'swadesh-207')
-        # translate word list
-        print ('Gathering word list for mono-sim calculation...')
+            use_words = swadesh.get_swadesh_words(langs_list[0], 'swadesh-207')
+        # translate word list (if needed)
         if in_args.model == 'm2m' and use_words == None:
-            model = m2m100()
-            use_words = utils.translate_english_words(eng_words, model, in_args.l0, in_args.words)
+            use_words = utils.translate_english_words(eng_words, model, langs_list[0], in_args.words)
         elif in_args.model == 'mbart' and use_words == None:
-            model = mbart()
-            use_words = utils.translate_english_words(eng_words, model, in_args.l0, in_args.words)
+            use_words = utils.translate_english_words(eng_words, model, langs_list[0], in_args.words)
         assert use_words != None  
-        # print (in_args.l0, 'words:', use_words)
-        mono_similarity(in_args.model, in_args.l0, use_words, eng_words)
+        # print (langs_list[0], 'words:', use_words)
+        mono_similarity(model, langs_list[0], use_words, eng_words)
 
         
     ''' similarity between two languages '''
-    if in_args.task == 'duo-sim' and in_args.model != '' and in_args.words != '' and in_args.l0 != '' and in_args.l1 != '':
+    if in_args.task == 'duo-sim' and in_args.words != '' and len(langs_list) > 1:
         # get word list
         eng_words = None
         words0 = None
         words1 = None
+        print ('Gathering word lists for duo-sim calculation...')
         if in_args.words == 'small':
             eng_words = english_words_small
         elif in_args.words == 'pereira':
             eng_words = pereira_words_english
         elif in_args.words == 'swadesh-110':
-            words0 = swadesh.get_swadesh_words(in_args.l0, 'swadesh-110')
-            words1 = swadesh.get_swadesh_words(in_args.l1, 'swadesh-110')
+            words0 = swadesh.get_swadesh_words(langs_list[0], 'swadesh-110')
+            words1 = swadesh.get_swadesh_words(langs_list[1], 'swadesh-110')
             eng_words = swadesh.get_swadesh_words('english', 'swadesh-110')
         elif in_args.words == 'swadesh-207':
-            words0 = swadesh.get_swadesh_words(in_args.l0, 'swadesh-207')
-            words1 = swadesh.get_swadesh_words(in_args.l1, 'swadesh-207')
+            words0 = swadesh.get_swadesh_words(langs_list[0], 'swadesh-207')
+            words1 = swadesh.get_swadesh_words(langs_list[1], 'swadesh-207')
             eng_words = swadesh.get_swadesh_words('english', 'swadesh-207')
-        # get list of translated words
-        print ('Gathering word lists for duo-sim calculation...')
+        # get list of translated words (if needed)
         if in_args.model == 'm2m' and words0 == None and words1 == None:
-            model = m2m100()
-            words0 = utils.translate_english_words(eng_words, model, in_args.l0, in_args.words)
-            words1 = utils.translate_english_words(eng_words, model, in_args.l1, in_args.words)
+            words0 = utils.translate_english_words(eng_words, model, langs_list[0], in_args.words)
+            words1 = utils.translate_english_words(eng_words, model, langs_list[1], in_args.words)
         elif in_args.model == 'mbart' and words0 == None and words1 == None:
-            model = mbart()
-            words0 = utils.translate_english_words(eng_words, model, in_args.l0, in_args.words)
-            words1 = utils.translate_english_words(eng_words, model, in_args.l1, in_args.words)
+            words0 = utils.translate_english_words(eng_words, model, langs_list[0], in_args.words)
+            words1 = utils.translate_english_words(eng_words, model, langs_list[1], in_args.words)
         assert words0 != None  
         assert words1 != None  
         # print (in_args.l0, 'words:', words0)
         # print (in_args.l1, 'words:', words1)
-        duo_similarity(in_args.model, in_args.l0, in_args.l1, words0, words1, eng_words, in_args.sim_func)
+        duo_similarity(model, langs_list[0], langs_list[1], words0, words1, in_args.sim_func)
 
 
     ''' similarity between multiple languages '''
-    if in_args.task == 'multi-sim' and in_args.model != '' and in_args.langs != []:
-        langs_list = []
-        # get all valid langs
-        if in_args.langs == 'all': langs_list = swadesh.get_all_langs()
-        # split custom langs
-        else: langs_list = in_args.langs.split(',')
-        assert len(langs_list) > 1
+    if in_args.task == 'multi-sim' and in_args.model != '' and len(langs_list[0]) > 1:
         # validate langs
-        multi_similarity(in_args.model, langs_list, in_args.sim_func)
-    
-def multi_similarity(_model: str, _langs: List[str], _sim_func: str):
-    print ('Computing similarity matrix between languages: %s with model \'%s\'. This may take some time...' % (_langs, _model))
+        multi_similarity(model, langs_list, in_args.sim_func)
+
+
+def multi_similarity(_model: _multi_lang_model_, _langs: List[str], _sim_func: str):
+    print ('Computing similarity matrix between languages: %s with model \'%s\'. This may take some time...' % (_langs, _model.name()))
     m_sim = multi_sim(_model, _langs)
     m_sim.compute_similarity_matrix(_sim_func)
 
-def duo_similarity(_model: str, _lang_0: str, _lang_1: str, _words0: List[str], _words1: List[str],  _eng_words: List[str], _sim_func: str):
-    print ('Computing similarity between languages: \'%s\' and \'%s\'. This may take some time...' % (_lang_0, _lang_1))
+def duo_similarity(_model: _multi_lang_model_, _lang_0: str, _lang_1: str, _words0: List[str], _words1: List[str], _sim_func: str):
+    print ('Computing similarity between languages: \'%s\' and \'%s\' with model \'%s\'. This may take some time...' % (_lang_0, _lang_1, _model.name()))
     d_sim = duo_sim(_model, _lang_0, _lang_1, _words0, _words1)
     res = d_sim.compute_similarity(_sim_func, True)
-    print ('The similarity between \'%s\' and \'%s\' using \'%s\' is: %f (between 0 and 1).' % (_lang_0, _lang_1, _model, res))
+    print ('The similarity between \'%s\' and \'%s\' with model \'%s\' is: %f (between 0 and 1).' % (_lang_0, _lang_1, _model.name(), res))
 
-def mono_similarity(_model: str, _lang: str, _words: List[str], _eng_words: List[str]):
-    print ('Computing mono-similarity using \'%s\' with \'%s\'. This may take some time...' % (_model, _lang))
+def mono_similarity(_model: _multi_lang_model_, _lang: str, _words: List[str], _eng_words: List[str]):
+    print ('Computing mono-similarity with model \'%s\' on language \'%s\'. This may take some time...' % (_model.name(), _lang))
     mono = mono_sim(_model, _words, _eng_words, _lang)
     mono.semantic_relation_matrix()
 

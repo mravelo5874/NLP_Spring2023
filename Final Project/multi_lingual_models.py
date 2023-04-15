@@ -4,11 +4,11 @@ from transformers import MBartForConditionalGeneration, MBart50TokenizerFast
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from utils import m2m_abbr, mbart_abbr
 
-class _model_:
+class _multi_lang_model_:
     def __init__(self):
         pass
 
-class m2m100(_model_):
+class m2m100(_multi_lang_model_):
     def __init__(self, _gpu: bool=True):
         self.model = M2M100ForConditionalGeneration.from_pretrained('facebook/m2m100_1.2B')
         self.tokenizer = M2M100Tokenizer.from_pretrained('facebook/m2m100_1.2B')
@@ -42,7 +42,7 @@ class m2m100(_model_):
     def get_language_id(self, lang: str):
         return m2m_abbr.get(lang.lower())
 
-class mbart(_model_):
+class mbart(_multi_lang_model_):
     def __init__(self, _gpu: bool=True):
         self.model = MBartForConditionalGeneration.from_pretrained('facebook/mbart-large-50-many-to-many-mmt')
         self.tokenizer = MBart50TokenizerFast.from_pretrained('facebook/mbart-large-50-many-to-many-mmt')
@@ -78,7 +78,7 @@ class mbart(_model_):
         return mbart_abbr.get(lang.lower())
 
 ''' not in use atm '''
-class mt0(_model_):
+class mt0(_multi_lang_model_):
     def __init__(self):
         self.model = AutoModelForSeq2SeqLM.from_pretrained('bigscience/mt0-large')
         self.tokenizer = AutoTokenizer.from_pretrained('bigscience/mt0-large')

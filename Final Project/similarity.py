@@ -4,11 +4,12 @@ import matplotlib.pyplot as plt
 import utils
 import swadesh
 from typing import List
-from multi_lingual_models import m2m100, mbart
+from multi_lingual_models import _multi_lang_model_
+
 
 ''' used to compute similarity between multiple languages in a NxN matrix '''
 class multi_sim:
-    def __init__(self, _model: str, _langs: List[str]):
+    def __init__(self, _model: _multi_lang_model_, _langs: List[str]):
         self.model = _model
         self.langs = _langs
         N = len(_langs)
@@ -73,7 +74,7 @@ class multi_sim:
                     text_color = ''
                     if self.norm_matrix[i, j] <= 0.3: text_color='white'
                     else: text_color='black'
-                    text = ax.text(j, i, round(self.sim_matrix[i, j], 3), ha="center", va="center", color=text_color, size='x-small')
+                    text = ax.text(j, i, round(self.sim_matrix[i, j], 3), ha="center", va="center", color=text_color, size='xxx-small')
         # rotate y-axis labels
         plt.setp(ax.get_xticklabels(), rotation=-40, ha='right', rotation_mode='anchor')
         plt.rcParams.update({'font.size': 8})
@@ -81,7 +82,7 @@ class multi_sim:
 
 ''' used to compute similarity between two languages '''
 class duo_sim:
-    def __init__(self, _model: str, _lang0: str, _lang1, _words0: List[str], _words1: List[str]):
+    def __init__(self, _model: _multi_lang_model_, _lang0: str, _lang1, _words0: List[str], _words1: List[str]):
         assert len(_words0) == len(_words1)
         self.lang0 = _lang0
         self.lang1 = _lang1
@@ -128,9 +129,8 @@ class duo_sim:
 
 ''' used to compute embedding and similarity vectors for one language '''
 class mono_sim:
-    def __init__(self, _model: str, _words: List[str], _eng_words: List[str], _lang: str):
-        if _model == 'm2m': self.model = m2m100()
-        elif _model == 'mbart':  self.model = mbart()
+    def __init__(self, _model: _multi_lang_model_, _words: List[str], _eng_words: List[str], _lang: str):
+        self.model = _model
         self.lang = self.model.get_language_id(_lang)
         self.words = _words
         self.eng_words = _eng_words
