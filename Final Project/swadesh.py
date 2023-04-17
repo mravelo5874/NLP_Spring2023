@@ -182,7 +182,7 @@ def get_swadesh_words(lang: str, version: str):
         # 41 --- 50
         elif lang=='icelandic'          or lang=='ice' or lang=='is': return icelandic.ice_207
         elif lang=='italian'            or lang=='ita' or lang=='it': return italian.ita_207
-        elif lang=='japanese'           or lang=='jap' or lang=='ja': return japanese.jpn_207
+        elif lang=='japanese'           or lang=='jap' or lang=='ja': return japanese.jpn_hira_207
         elif lang=='javanese'           or lang=='jav' or lang=='jv': return javanese.jav_207
         elif lang=='georgian'           or lang=='geo' or lang=='ka': return georgian.geo_207
         # TODO generate swadesh list -> elif lang=='kazakh'            or lang=='kaz' or lang=='aa': return kazakh.kaz_207

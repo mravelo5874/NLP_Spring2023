@@ -15,6 +15,7 @@ class multi_sim:
         N = len(_langs)
         self.sim_matrix = np.zeros(shape=[N, N])
         self.norm_matrix = np.zeros(shape=[N, N])
+        self.lang_dict = {}
         
     def compute_similarity_matrix(self, sim_func: str):
         prev_combos = []
@@ -34,6 +35,7 @@ class multi_sim:
                     print ('similarity between \'%s\' and \'%s\' is %f.' % (self.langs[i], self.langs[j], similarity))
                     prev_combos.append([self.langs[i], self.langs[j]])
                     prev_combos.append([self.langs[j], self.langs[i]])
+                    self.lang_dict.update({self.langs[i] + '_' + self.langs[j]:similarity})
                 # set value in matrix to 1 if same languages
                 elif self.langs[i] == self.langs[j]:
                     self.sim_matrix[i, j] = 1
@@ -80,6 +82,45 @@ class multi_sim:
         plt.setp(ax.get_xticklabels(), rotation=-40, ha='right', rotation_mode='anchor')
         plt.rcParams.update({'font.size': 8})
         plt.show()
+    
+    # TODO this 
+    #   - find most and least similar language for each language
+    def compute_stats(self):
+        print ('\t\t[STATISTICS]')
+        
+        print ('\tmost to least similar: ')
+        # sort lang dictionary
+        sorted_lang_dict = sorted(self.lang_dict.items(), key=lambda x:x[1], reverse=True)
+        for i in range(len(sorted_lang_dict)):
+            print ('%i %s : %f' % (i, sorted_lang_dict[i][0], sorted_lang_dict[i][1]))
+        
+        print ('\taverage similarity: ')
+        average_sim = []
+        for i in range(len(self.langs)):
+            sum_sim = 0.0
+            for j in range(len(sorted_lang_dict)):
+                if sorted_lang_dict[j][0].find(self.langs[i]) != -1:
+                    sum_sim += sorted_lang_dict[j][1]
+            avg = sum_sim / (len(self.langs) - 1)
+            average_sim.append([self.langs[i], avg])
+        average_sim = sorted(average_sim, key=lambda x:x[1], reverse=True)
+        for i in range(len(average_sim)):
+            print ('%i %s : %f' % (i, average_sim[i][0], average_sim[i][1]))
+            
+        print ('\tmost similar to each language: ')
+        most_sim = []
+        for i in range(len(self.langs)):
+            max_sim = 0.0
+            max_lang = ''
+            for j in range(len(sorted_lang_dict)):
+                if sorted_lang_dict[j][0].find(self.langs[i]) != -1 and sorted_lang_dict[j][1] > max_sim:
+                    max_sim = sorted_lang_dict[j][1]
+                    max_lang = sorted_lang_dict[j][0].replace(self.langs[i], '').replace('_', '')
+            most_sim.append([self.langs[i] + '->' + max_lang, max_sim])
+        most_sim = sorted(most_sim, key=lambda x:x[1], reverse=True)
+        for i in range(len(most_sim)):
+            print ('%i %s : %f' % (i, most_sim[i][0], most_sim[i][1]))
+
 
 ''' used to compute similarity between two languages '''
 class duo_sim:

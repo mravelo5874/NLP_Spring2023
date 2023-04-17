@@ -158,6 +158,7 @@ def multi_similarity(_model: _multi_lang_model_, _langs: List[str], _sim_func: s
     print ('Computing similarity matrix between languages: %s with model \'%s\'. This may take some time...' % (_langs, _model.name()))
     m_sim = multi_sim(_model, _langs)
     m_sim.compute_similarity_matrix(_sim_func)
+    m_sim.compute_stats()
 
 def duo_similarity(_model: _multi_lang_model_, _lang_0: str, _lang_1: str, _words0: List[str], _words1: List[str], _sim_func: str):
     print ('Computing similarity between languages: \'%s\' and \'%s\' with model \'%s\'. This may take some time...' % (_lang_0, _lang_1, _model.name()))
