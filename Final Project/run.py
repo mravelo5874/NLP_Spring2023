@@ -34,10 +34,10 @@ pereira_words_english = ['ability', 'accomplished', 'angry', 'apartment', 'appla
 @dataclass
 class IN_ARGS():
     model: str = 'm2m'
-    task: str = 'example'
-    words: str = 'swadesh_110'
+    task: str = 'multi-sim'
+    words: str = 'swadesh_207'
     sim_func: str = 'spearman'
-    langs: str = 'english,spanish,french'
+    langs: str = 'all'
 
 @dataclass
 class OUT_ARGS():
@@ -82,6 +82,11 @@ def main():
         return
     
     
+    if in_args.task == 'trans' and in_args.words != None:
+        english_translate(model, in_args.words, langs_list[0])
+        return
+    
+    
     ''' similarity matrix generation for a single language '''
     if in_args.task == 'mono-sim' and in_args.words != '': 
         # get word list
@@ -106,6 +111,7 @@ def main():
         assert use_words != None  
         # print (langs_list[0], 'words:', use_words)
         mono_similarity(model, langs_list[0], use_words, eng_words)
+        return
 
         
     ''' similarity between two languages '''
@@ -139,6 +145,7 @@ def main():
         # print (in_args.l0, 'words:', words0)
         # print (in_args.l1, 'words:', words1)
         duo_similarity(model, langs_list[0], langs_list[1], words0, words1, in_args.sim_func)
+        return
 
 
     ''' similarity between multiple languages '''
@@ -162,6 +169,11 @@ def mono_similarity(_model: _multi_lang_model_, _lang: str, _words: List[str], _
     print ('Computing mono-similarity with model \'%s\' on language \'%s\'. This may take some time...' % (_model.name(), _lang))
     mono = mono_sim(_model, _words, _eng_words, _lang)
     mono.semantic_relation_matrix()
+    
+def english_translate(_model: _multi_lang_model_, _words: str, _lang: str):
+    print ('Translating...')
+    res = _model.translate('hello, my name is marco', 'en', _model.get_language_id(_lang))
+    print ('Translate \'%s\' to \'%s\' using \'%s\': %s' % (_words, _lang, _model.name(), res))
 
 def m2m_example_translate():
     src = 'The sun rose over the mountains, casting a golden glow across the valley.'
