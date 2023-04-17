@@ -83,8 +83,7 @@ class multi_sim:
         plt.rcParams.update({'font.size': 8})
         plt.show()
     
-    # TODO this 
-    #   - find most and least similar language for each language
+
     def compute_stats(self):
         print ('\t\t[STATISTICS]')
         
@@ -117,7 +116,7 @@ class multi_sim:
                     max_sim = sorted_lang_dict[j][1]
                     max_lang = sorted_lang_dict[j][0].replace(self.langs[i], '').replace('_', '')
             most_sim.append([self.langs[i] + '->' + max_lang, max_sim])
-        most_sim = sorted(most_sim, key=lambda x:x[1], reverse=True)
+        #most_sim = sorted(most_sim, key=lambda x:x[1], reverse=True)
         for i in range(len(most_sim)):
             print ('%i %s : %f' % (i, most_sim[i][0], most_sim[i][1]))
 
