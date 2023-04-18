@@ -165,10 +165,10 @@ valid_languages = [
 'xhosa',
 'yiddish',
 'yoruba',
-'chinese'
+'chinese',
 'zulu',
 # OTHERS
-'telugu'
+'telugu',
 ]
 
 def get_swadesh_words(lang: str, version: str):

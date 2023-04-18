@@ -169,7 +169,7 @@ m2m_abbr = {
     'yiddish':          'yi', 
     'yoruba':           'yo', 
     'chinese':          'zh', 
-    'zulu':             'zu'
+    'zulu':             'zu',
 }
 
 mbart_abbr = {
