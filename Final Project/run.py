@@ -74,7 +74,7 @@ def main():
     ''' get languages '''
     langs_list = []
     # get all valid langs
-    if in_args.langs == 'all': langs_list = swadesh.get_all_langs()
+    if in_args.langs == 'all': langs_list = swadesh.get_all_langs(in_args.model)
     # split custom langs
     else: langs_list = in_args.langs.split(',')
     if len(langs_list) <= 0:

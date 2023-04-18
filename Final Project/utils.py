@@ -147,13 +147,13 @@ m2m_abbr = {
     'sindhi':           'sd', 
     'sinhala':          'si',
     'slovak':           'sk', 
-    'slovenian':        'sl', 
+    'slovene':          'sl', 
     'somali':           'so', 
     'albanian':         'sq', 
     'serbian':          'sr', 
     'swati':            'ss', 
     'sundanese':        'su', 
-    'swedish ':         'sv', 
+    'swedish':          'sv', 
     'swahili':          'sw', 
     'tamil':            'ta', 
     'thai':             'th', 
@@ -226,110 +226,3 @@ mbart_abbr = {
 'galician':     'gl_ES', 
 'slovene':      'sl_SI',
 }
-
-
-
-"""
-[VALID MTO LANGUAGES]
-Afrikaans
-Amharic
-Arabic
-Azerbaijani
-Belarusian
-Bulgarian
-Bengali
-Catalan
-Cebuano
-Corsican
-Czech
-Welsh
-Danish
-German
-Greek
-English
-Esperanto
-Spanish
-Estonian
-Basque
-Persian
-Finnish
-fil
-French
-Western Frisian
-Irish
-Scottish Gaelic
-Galician
-Gujarati
-Hausa
-haw
-Hindi
-hmn
-Haitian
-Hungarian
-Armenian
-Igbo
-Icelandic
-Italian
-iw
-Japanese
-Javanese
-Georgian
-Kazakh
-Khmer
-Kannada
-Korean
-Kurdish
-Kyrgyz
-Latin
-Luxembourgish
-Lao
-Lithuanian
-Latvian
-Malagasy
-Māori
-Macedonian
-Malayalam
-Mongolian
-Marathi
-Malay
-Maltese
-Burmese
-Nepali
-Dutch
-Norwegian
-Chichewa
-Panjabi
-Polish
-Pashto
-Portuguese
-Romanian
-Russian
-Sindhi
-Sinhala
-Slovak
-Slovenian
-Samoan
-Shona
-Somali
-Albanian
-Serbian
-Southern Sotho
-Sundanese
-Swedish
-Swahili
-Tamil
-Telugu
-Tajik
-Thai
-Turkish
-Ukrainian
-und
-Urdu
-Uzbek
-Vietnamese
-Xhosa
-Yiddish
-Yoruba
-Chinese
-Zulu
-"""

@@ -13,26 +13,47 @@ from swadesh_words import ganda, lingala, lao, lithuanian, latvian, malagasy, ma
 # 61 --- 70
 from swadesh_words import malay, burmese, nepali, dutch, norwegian, sotho, occitan, oriya, punjabi, polish
 # 71 --- 80
+from swadesh_words import pashto, portuguese, romanian, russian, sindhi, sinhala, slovak, slovene, somali, albanian
+# 81 --- 90
+from swadesh_words import serbian, swati, sundanese, swedish, swahili, tamil, thai, tagalog, tswana, turkish
+# 91 --- 100
+from swadesh_words import ukrainian, urdu, uzbek, vietnamese, wolof, xhosa, yiddish, yoruba, chinese, zulu
+# OTHERS
+from swadesh_words import telugu
 
 
-''' all inclusive list '''
-all_langs = ['afrikaans','amharic','arabic','asturian','azerbaijani','bashkir','belarusian','bulgarian','bengali','breton',
+''' all languages with a swadesh 207 list '''
+not_impl = ['bosnian','fulah','igbo','kazakh','luxembourgish','ganda','lao','sotho','oriya','pashto','sindhi','sinhala','swati',
+            'tamil','tswana','urdu','wolof','xhosa']
+
+m2m_all = ['afrikaans','amharic','arabic','asturian','azerbaijani','bashkir','belarusian','bulgarian','bengali','breton',
             'bosnian','catalan','cebuano','czech','welsh','danish','german','greek','english','spanish','estonian','persian',
             'fulah','finnish','french','frisian','irish','gaelic','galician','gujarati','hausa','hebrew','hindi','croatian',
             'haitian','hungarian','armenian','indonesian','igbo','iloko','icelandic','italian','japanese','javanese','georgian',
             'kazakh','khmer','kannada','korean','luxembourgish','ganda','lingala','lao','lithuanian','latvian','malagasy',
             'macedonian','malayalam','mongolian','marathi','malay','burmese','nepali','dutch','norwegian','sotho','occitan',
-            'oriya','punjabi','polish']
-not_implemented_langs = ['bosnian','fulah','igbo','kazakh','luxembourgish','ganda','lao','sotho','oriya']
+            'oriya','punjabi','polish','pashto','portuguese','romanian','russian','sindhi','sinhala','slovak','slovene', 
+            'somali','albanian','serbian','swati','sundanese','swedish','swahili','tamil','thai','tagalog','tswana','turkish', 
+            'ukrainian','urdu','uzbek','vietnamese','wolof','xhosa','yiddish','yoruba','chinese','zulu']
 
+mbart_all = ['arabic','czech','german','english','spanish','estonian','finnish','french','gujarati','hindi','italian',
+            'japanese','kazakh','korean','lithuanian','latvian','burmese','nepali','dutch','romanian','russian','sinhala',
+            'turkish','vietnamese','chinese','afrikaans','azerbaijani','bengali','persian','hebrew','croatian','indonesian',
+            'georgian','khmer','macedonian','malayalam','mongolian','marathi','polish','pashto','portuguese','swedish',
+            'swahili','tamil','telugu','thai','tagalog','ukrainian','urdu','xhosa','galician','slovene']
 
-
-def get_all_langs(): 
+def get_all_langs(_model: str): 
     all = []
-    for i in range(len(all_langs)):
-        if all_langs[i] not in not_implemented_langs:
-            all.append(all_langs[i])
-    return all
+    if _model == 'm2m':
+        for i in range(len(m2m_all)):
+            if m2m_all[i] not in not_impl:
+                all.append(m2m_all[i])
+        return all
+    elif _model == 'mbart':
+        for i in range(len(mbart_all)):
+            if mbart_all[i] not in not_impl:
+                all.append(mbart_all[i])
+        return all
 
 ''' languages with swadesh word lists '''
 valid_languages = [
@@ -113,12 +134,43 @@ valid_languages = [
 'oriya',        'ori', 'or',
 'punjabi',      'pun', 'pa',
 'polish',       'pol', 'pl',
-# 71 --- 80
-
-
+# 71 --- 80 (running out of time + lazy so no more abbrs.)
+'pashto',
+'portuguese',
+'romanian',
+'russian',
+'sindhi',
+'sinhala',
+'slovak',
+'slovene',
+'somali',
+'albanian',
+# 81 --- 90
+'serbian',
+'swati',
+'sundanese',
+'swedish',
+'swahili',
+'tamil',
+'thai',
+'tagalog',
+'tswana',
+'turkish',
+# 91 --- 100
+'ukrainian',
+'urdu',
+'uzbek',
+'vietnamese',
+'wolof',
+'xhosa',
+'yiddish',
+'yoruba',
+'chinese'
+'zulu',
+# OTHERS
+'telugu'
 ]
 
-from swadesh_words import german, portuguese, spanish, ukrainian
 def get_swadesh_words(lang: str, version: str):
     assert lang in valid_languages
     
@@ -213,5 +265,39 @@ def get_swadesh_words(lang: str, version: str):
         elif lang=='punjabi'            or lang=='pun' or lang=='pa': return punjabi.pun_207
         elif lang=='polish'             or lang=='pol' or lang=='pl': return polish.pol_207
         # 71 --- 80
-        
+        # TODO generate swadesh list -> elif lang=='pashto'             : return pashto.pas_207
+        elif lang=='portuguese'         : return portuguese.por_207
+        elif lang=='romanian'           : return romanian.rom_207
+        elif lang=='russian'            : return russian.rus_207
+        # TODO generate swadesh list -> elif lang=='sindhi'             : return sindhi.sin_207
+        # TODO generate swadesh list -> elif lang=='sinhala'             : return sinhala.sinh_207
+        elif lang=='slovak'             : return slovak.slo_207
+        elif lang=='slovene'            : return slovene.slo_207
+        elif lang=='somali'             : return somali.som_207
+        elif lang=='albanian'           : return albanian.alb_207
+        # 81 --- 90
+        elif lang=='serbian'            : return serbian.ser_207
+        # TODO generate swadesh list -> elif lang=='swati'             : return swati.swa_207
+        elif lang=='sundanese'          : return sundanese.sun_207
+        elif lang=='swedish'            : return swedish.swe_207
+        elif lang=='swahili'            : return swahili.swa_207
+        # TODO generate swadesh list -> elif lang=='tamil'              : return tamil.tam_207
+        elif lang=='thai'               : return thai.thai_207
+        elif lang=='tagalog'            : return tagalog.tag_207
+        # TODO generate swadesh list -> elif lang=='tswana'              : return tswana.tam_207
+        elif lang=='turkish'            : return turkish.turk_207
+        # 91 --- 100
+        elif lang=='ukrainian'          : return ukrainian.ukr_207
+        # TODO generate swadesh list -> elif lang=='urdu'               : return urdu.uru_207
+        elif lang=='uzbek'              : return uzbek.uzb_207
+        elif lang=='vietnamese'         : return vietnamese.viet_207
+        # TODO generate swadesh list -> elif lang=='wolof'              : return wolof.wol_207
+        # TODO generate swadesh list -> elif lang=='xhosa'              : return xhosa.xho_207
+        elif lang=='yiddish'            : return yiddish.yid_207
+        elif lang=='yoruba'             : return yoruba.yor_207
+        elif lang=='chinese'            : return chinese.chi_207
+        elif lang=='zulu'               : return zulu.zul_207
+        # OTHERS
+        elif lang=='telugu'             : return telugu.tel_207
+    
         else: print ('[ERROR]: Could not find swadesh-207 list for \'%s\'.' % lang)
