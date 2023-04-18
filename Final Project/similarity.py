@@ -63,6 +63,8 @@ class multi_sim:
         ax.yaxis.set_ticks_position('right')
         ax.set_xticks(np.arange(len(xlabs)), labels=xlabs)
         ax.set_yticks(np.arange(len(ylabs)), labels=ylabs)
+        ax.tick_params(axis='both', which='major', labelsize=6)
+        ax.tick_params(axis='both', which='minor', labelsize=6)
         # add color bar
         cbaxes = fig.add_axes([0.1, 0.1, 0.03, 0.8])  # This is the position for the colorbar
         cbar = ax.figure.colorbar(im, cax=cbaxes)
@@ -80,7 +82,6 @@ class multi_sim:
         '''
         # rotate y-axis labels
         plt.setp(ax.get_xticklabels(), rotation=-40, ha='right', rotation_mode='anchor')
-        plt.rcParams.update({'font.size': 8})
         plt.show()
     
 
@@ -98,7 +99,8 @@ class multi_sim:
         for i in range(len(self.langs)):
             sum_sim = 0.0
             for j in range(len(sorted_lang_dict)):
-                if sorted_lang_dict[j][0].find(self.langs[i]) != -1:
+                if (sorted_lang_dict[j][0].find(self.langs[i] + '_') != -1 or 
+                    sorted_lang_dict[j][0].find('_' + self.langs[i]) != -1):
                     sum_sim += sorted_lang_dict[j][1]
             avg = sum_sim / (len(self.langs) - 1)
             average_sim.append([self.langs[i], avg])
@@ -112,7 +114,8 @@ class multi_sim:
             max_sim = 0.0
             max_lang = ''
             for j in range(len(sorted_lang_dict)):
-                if sorted_lang_dict[j][0].find(self.langs[i]) != -1 and sorted_lang_dict[j][1] > max_sim:
+                if (sorted_lang_dict[j][0].find(self.langs[i] + '_') != -1 or 
+                    sorted_lang_dict[j][0].find('_' + self.langs[i])) and sorted_lang_dict[j][1] > max_sim:
                     max_sim = sorted_lang_dict[j][1]
                     max_lang = sorted_lang_dict[j][0].replace(self.langs[i], '').replace('_', '')
             most_sim.append([self.langs[i] + '->' + max_lang, max_sim])
